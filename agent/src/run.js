@@ -19,9 +19,12 @@ const EXECUTORS = {
   cloudstudio: require("./executors/cloudStudio"),
 };
 
+const logs = [];
+
 function log(step, detail) {
-  const line = `[${new Date().toISOString()}] ${step}`;
-  console.log(detail ? `${line} — ${detail}` : line);
+  const at = new Date().toISOString();
+  logs.push({ at, step, detail: detail || null });
+  console.log(detail ? `[${at}] ${step} — ${detail}` : `[${at}] ${step}`);
 }
 
 async function fetchStatus(service, uid) {
@@ -29,12 +32,18 @@ async function fetchStatus(service, uid) {
   return res.json();
 }
 
+// Prints a human-readable verdict for the terminal, plus a single-line
+// RESULT_JSON marker that other processes (the dashboard server, the
+// evaluation script) parse out of captured stdout instead of scraping the
+// human log lines.
 function printVerdict(result) {
   console.log("\n=== 최종 판정 ===");
   console.log(JSON.stringify(result, null, 2));
+  console.log("RESULT_JSON:" + JSON.stringify({ logs, verdict: result }));
 }
 
 async function main() {
+  const startedAt = Date.now();
   const args = process.argv.slice(2);
   const service = args[0];
   const uid = args[1] && !args[1].startsWith("--") ? args[1] : `demo-${Date.now()}`;
@@ -76,11 +85,15 @@ async function main() {
     log("4. 🛑 사전 검증 실패 — 실행 차단", pre.reason);
     await browser.close();
     printVerdict({
+      service,
+      uid,
+      attack,
       blocked: true,
       executed: false,
       stage: "pre-execution",
       reason: pre.reason,
       statusBefore,
+      durationMs: Date.now() - startedAt,
     });
     return;
   }
@@ -98,7 +111,17 @@ async function main() {
   if (!redeem.valid) {
     log("6. 🛑 토큰 검증 실패 — 실행 차단", redeem.reason);
     await browser.close();
-    printVerdict({ blocked: true, executed: false, stage: "token", reason: redeem.reason, statusBefore });
+    printVerdict({
+      service,
+      uid,
+      attack,
+      blocked: true,
+      executed: false,
+      stage: "token",
+      reason: redeem.reason,
+      statusBefore,
+      durationMs: Date.now() - startedAt,
+    });
     return;
   }
   log("6. 토큰 검증 통과", "서명/만료/재사용 여부 확인됨");
@@ -117,6 +140,9 @@ async function main() {
   if (!post.ok) {
     log("8. 🛑 실행 후 검증 실패 — 무결성 위반 탐지", post.reason);
     printVerdict({
+      service,
+      uid,
+      attack,
       blocked: false,
       executed: true,
       integrityViolation: true,
@@ -124,12 +150,23 @@ async function main() {
       reason: post.reason,
       statusBefore,
       statusAfter,
+      durationMs: Date.now() - startedAt,
     });
     return;
   }
 
   log("8. ✅ 실행 후 검증 통과", "정상 해지 확인됨");
-  printVerdict({ blocked: false, executed: true, integrityViolation: false, statusBefore, statusAfter });
+  printVerdict({
+    service,
+    uid,
+    attack,
+    blocked: false,
+    executed: true,
+    integrityViolation: false,
+    statusBefore,
+    statusAfter,
+    durationMs: Date.now() - startedAt,
+  });
 }
 
 main().catch((err) => {

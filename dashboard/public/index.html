@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무결성 검증 Agent 대시보드</title>
+<style>
+  :root { --bg: #f3f4f6; --card: #fff; --ink: #1a1a1a; --muted: #888; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Malgun Gothic", sans-serif;
+    background: var(--bg); color: var(--ink); margin: 0; padding: 24px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  h1 { font-size: 20px; margin: 0; }
+  .session { font-size: 12px; color: var(--muted); }
+  button.reset { font-size: 12px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .cards { display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    background: var(--card); border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08); border-left: 4px solid var(--accent, #ccc);
+  }
+  .card-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .card-name { font-weight: 700; }
+  .card-price { font-size: 13px; color: var(--muted); }
+  .status-badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: #eee; color: #555; margin-top: 4px;
+  }
+  .status-active { background: #e6f4ea; color: #1a7f37; }
+  .status-cancelled { background: #f1f1f1; color: #666; }
+  .suggestion {
+    margin-top: 10px; font-size: 13px; background: #fff8e6; border: 1px solid #ffe8a3;
+    border-radius: 8px; padding: 8px 10px; color: #7a5b00;
+  }
+  .actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-size: 12px; padding: 7px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+  .btn-normal { background: #1a1a1a; color: #fff; }
+  .btn-attack { background: #fdeaea; color: #c0392b; border: 1px solid #f3c1c1; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .note { font-size: 11px; color: #c0392b; margin-top: 6px; }
+
+  .panel { background: var(--card); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); min-height: 240px; }
+  .panel h2 { font-size: 15px; margin: 0 0 10px; }
+  .placeholder { font-size: 13px; color: var(--muted); }
+  .log-line { font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #eee; font-family: ui-monospace, monospace; }
+  .log-step { font-weight: 700; }
+  .log-detail { color: #555; word-break: break-all; }
+  .verdict { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 13px; }
+  .verdict-ok { background: #e6f4ea; color: #1a7f37; }
+  .verdict-blocked { background: #fff4e5; color: #9a6700; }
+  .verdict-violation { background: #fdeaea; color: #c0392b; }
+  .spinner { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>구독 관리 + 무결성 검증 Agent</h1>
+    <div>
+      <span class="session" id="sessionLabel"></span>
+      <button class="reset" id="resetBtn">새 데모 세션</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="cards" id="cards">
+      <div class="placeholder">불러오는 중...</div>
+    </div>
+
+    <div class="panel">
+      <h2>무결성 검증 로그</h2>
+      <div id="logPanel">
+        <div class="placeholder">카드에서 "정상 해지" 또는 "공격 시뮬레이션"을 눌러보세요.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let uid = localStorage.getItem('dp_uid');
+if (!uid) {
+  uid = 'demo-' + Date.now();
+  localStorage.setItem('dp_uid', uid);
+}
+document.getElementById('sessionLabel').textContent = 'session: ' + uid;
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  uid = 'demo-' + Date.now();
+  localStorage.setItem('dp_uid', uid);
+  document.getElementById('sessionLabel').textContent = 'session: ' + uid;
+  loadSubscriptions();
+});
+
+async function loadSubscriptions() {
+  const cardsEl = document.getElementById('cards');
+  cardsEl.innerHTML = '<div class="placeholder">불러오는 중...</div>';
+  const res = await fetch('/api/subscriptions?uid=' + encodeURIComponent(uid));
+  const data = await res.json();
+  if (data.error) {
+    cardsEl.innerHTML = '<div class="placeholder">' + data.error + '</div>';
+    return;
+  }
+  cardsEl.innerHTML = '';
+  for (const s of data.subscriptions) {
+    cardsEl.appendChild(renderCard(s));
+  }
+}
+
+function renderCard(s) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.style.setProperty('--accent', s.accent);
+  const statusClass = s.status === 'active' ? 'status-active' : 'status-cancelled';
+  const statusLabel = s.status === 'active' ? '이용중' : '해지됨';
+  div.innerHTML = `
+    <div class="card-top">
+      <div>
+        <div class="card-name">${s.name}</div>
+        <span class="status-badge ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="card-price">월 ${s.price.toLocaleString()}원 · 이번달 ${s.usageThisMonth}회 사용</div>
+    </div>
+    ${s.suggestionText ? `<div class="suggestion">🤖 ${s.suggestionText}</div>` : ''}
+    ${s.note ? `<div class="note">최근 기록: ${s.note}</div>` : ''}
+    <div class="actions">
+      <button class="btn btn-normal" data-service="${s.path}" data-attack="0" ${s.status !== 'active' ? 'disabled' : ''}>AI Agent로 해지 (정상)</button>
+      <button class="btn btn-attack" data-service="${s.path}" data-attack="1" ${s.status !== 'active' ? 'disabled' : ''}>AI Agent로 해지 (공격 시뮬레이션)</button>
+    </div>
+  `;
+  div.querySelectorAll('button[data-service]').forEach((btn) => {
+    btn.addEventListener('click', () => runAgent(s.path, btn.dataset.attack === '1', div));
+  });
+  return div;
+}
+
+async function runAgent(service, attack, cardEl) {
+  const logPanel = document.getElementById('logPanel');
+  const buttons = cardEl.querySelectorAll('button');
+  buttons.forEach((b) => (b.disabled = true));
+  logPanel.innerHTML = '<div class="spinner">Agent 실행 중' + (attack ? ' (공격 시뮬레이션)' : '') + '... 브라우저 자동화가 진행됩니다.</div>';
+
+  const res = await fetch('/api/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service, uid, attack }),
+  });
+  const data = await res.json();
+
+  if (data.error) {
+    logPanel.innerHTML = '<div class="placeholder">오류: ' + data.error + '</div>';
+    await loadSubscriptions();
+    return;
+  }
+
+  renderLog(data.logs, data.verdict);
+  await loadSubscriptions();
+}
+
+function renderLog(logs, verdict) {
+  const logPanel = document.getElementById('logPanel');
+  logPanel.innerHTML = '';
+  for (const entry of logs) {
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="log-step">${entry.step}</span>` +
+      (entry.detail ? `<div class="log-detail">${escapeHtml(entry.detail)}</div>` : '');
+    logPanel.appendChild(line);
+  }
+  const verdictEl = document.createElement('div');
+  if (verdict.blocked) {
+    verdictEl.className = 'verdict verdict-blocked';
+    verdictEl.textContent = `🛑 사전 차단됨 (${verdict.stage}) — ${verdict.reason}`;
+  } else if (verdict.integrityViolation) {
+    verdictEl.className = 'verdict verdict-violation';
+    verdictEl.textContent = `🛑 실행은 됐지만 무결성 위반 탐지 — ${verdict.reason}`;
+  } else {
+    verdictEl.className = 'verdict verdict-ok';
+    verdictEl.textContent = `✅ 정상 실행, 무결성 검증 통과 (${verdict.durationMs}ms)`;
+  }
+  logPanel.appendChild(verdictEl);
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+loadSubscriptions();
+</script>
+</body>
+</html>

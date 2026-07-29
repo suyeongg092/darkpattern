@@ -4,9 +4,11 @@
   "version": "0.1.0",
   "workspaces": [
     "mock-services",
-    "agent"
+    "agent",
+    "dashboard"
   ],
   "scripts": {
-    "mock:start": "npm run start --workspace mock-services"
+    "mock:start": "npm run start --workspace mock-services",
+    "dashboard:start": "npm run start --workspace dashboard"
   }
 }
