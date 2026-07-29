@@ -9,6 +9,7 @@ const { chromium } = require("playwright");
 const { draftPolicy } = require("./policy");
 const { checkBeforeSubmit, checkAfterExecution } = require("./policyEngine");
 const { issueToken, redeemToken } = require("./token");
+const { injectCursor } = require("./executors/base");
 
 const MOCK_BASE = process.env.MOCK_BASE_URL || "http://localhost:4000";
 
@@ -99,6 +100,7 @@ async function main() {
   }
   const browser = await chromium.launch(launchOpts);
   const page = await browser.newPage({ viewport: { width: 720, height: 480 } });
+  await injectCursor(page);
   const cdp = await startScreencast(page);
 
   const { formInfo, submit } = await EXECUTORS[service].run(page, {

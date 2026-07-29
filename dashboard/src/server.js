@@ -86,7 +86,10 @@ app.get("/api/run-stream", (req, res) => {
   });
   const send = (payload) => res.write(`data: ${JSON.stringify(payload)}\n\n`);
 
-  const child = spawn("node", args, { cwd: AGENT_DIR, env: { ...process.env, STREAM_FRAMES: "1" } });
+  const child = spawn("node", args, {
+    cwd: AGENT_DIR,
+    env: { ...process.env, STREAM_FRAMES: "1", SLOW_DEMO: "1" },
+  });
   let buffer = "";
 
   child.stdout.on("data", (chunk) => {

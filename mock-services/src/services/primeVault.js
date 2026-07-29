@@ -50,7 +50,7 @@ router.get("/cancel/step1", (req, res) => {
   const q = qs({ uid, attack: attack ? 1 : "" });
   res.send(
     page({
-      title: "잠깐만요 (1/4) - PrimeVault",
+      title: "잠깐만요 (1/5) - PrimeVault",
       accent: ACCENT,
       uid,
       attack,
@@ -73,7 +73,7 @@ router.get("/cancel/step2", (req, res) => {
   const q = qs({ uid, attack: attack ? 1 : "" });
   res.send(
     page({
-      title: "잠깐만요 (2/4) - PrimeVault",
+      title: "잠깐만요 (2/5) - PrimeVault",
       accent: ACCENT,
       uid,
       attack,
@@ -84,7 +84,39 @@ router.get("/cancel/step2", (req, res) => {
         </div>
         <a class="btn btn-primary" style="display:block" href="/${SERVICE}?${q}">일시중지할게요</a>
         <div style="text-align:center;margin-top:16px">
-          <a class="btn-ghost" href="/${SERVICE}/cancel/step3?${q}">아니요, 완전히 종료할게요</a>
+          <a class="btn-ghost" href="/${SERVICE}/cancel/step2b?${q}">아니요, 완전히 종료할게요</a>
+        </div>
+      `,
+    })
+  );
+});
+
+// Discount retention offer — the classic "before you go" price drop, plus a
+// spend-comparison bar framing cancellation as leaving value on the table.
+router.get("/cancel/step2b", (req, res) => {
+  const { uid, attack } = ctx(req);
+  const q = qs({ uid, attack: attack ? 1 : "" });
+  res.send(
+    page({
+      title: "잠깐만요 (3/5) - PrimeVault",
+      accent: ACCENT,
+      uid,
+      attack,
+      body: `
+        <div class="card">
+          <h3>딱 한 번, 3개월 50% 할인은 어떠세요?</h3>
+          <p style="font-size:13px;color:#888">월 8,900원 → 4,450원으로 유지하실 수 있어요.</p>
+        </div>
+        <div class="card">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600">이번 달 받은 혜택</p>
+          <div style="font-size:12px;color:#888;display:flex;justify-content:space-between"><span>멤버십 비용</span><span>8,900원</span></div>
+          <div style="height:8px;background:#eee;border-radius:4px;margin:4px 0 10px;overflow:hidden"><div style="width:20%;height:100%;background:#ccc"></div></div>
+          <div style="font-size:12px;color:${ACCENT};display:flex;justify-content:space-between;font-weight:700"><span>무료배송+특가 혜택</span><span>31,000원</span></div>
+          <div style="height:8px;background:#eee;border-radius:4px;margin:4px 0;overflow:hidden"><div style="width:90%;height:100%;background:${ACCENT}"></div></div>
+        </div>
+        <a class="btn btn-primary" style="display:block" href="/${SERVICE}?${q}">50% 할인으로 유지하기</a>
+        <div style="text-align:center;margin-top:16px">
+          <a class="btn-ghost" href="/${SERVICE}/cancel/step3?${q}">할인도 필요 없어요, 종료할게요</a>
         </div>
       `,
     })
@@ -96,7 +128,7 @@ router.get("/cancel/step3", (req, res) => {
   const targetPath = attack ? "keep-benefits" : "end-benefits";
   res.send(
     page({
-      title: "종료 확인 (4/4) - PrimeVault",
+      title: "종료 확인 (5/5) - PrimeVault",
       accent: ACCENT,
       uid,
       attack,

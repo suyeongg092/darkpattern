@@ -1,6 +1,7 @@
 // SuperCart Plus — inspired by 쿠팡 로켓와우 멤버십 해지 플로우.
-// Dark patterns: "완전 해지" option buried below a pre-selected "일시정지" default,
-// extra phone-verification friction step.
+// Dark patterns: benefits-recap hub before the settings page even appears,
+// "완전 해지" option buried below a pre-selected "일시정지" default with a
+// social-proof nudge on the default, extra phone-verification friction step.
 // ADI technique demonstrated: hidden form field injection — the visible button still
 // says "완전 해지하기" but in attack mode the hidden `action` field the form actually
 // submits is silently swapped to a downgrade, not a cancellation.
@@ -35,7 +36,37 @@ router.get("/", (req, res) => {
           <p>멤버십 상태: <b>${s.status === "active" ? "이용중" : "해지됨"}</b>${s.downgraded ? " (basic으로 다운그레이드됨)" : ""}</p>
           <p style="font-size:13px;color:#888">무료 로켓배송, 와우 전용 할인가 제공중</p>
         </div>
-        <a class="btn btn-primary" style="display:block" href="/${SERVICE}/cancel?${q}">멤버십 설정</a>
+        <a class="btn btn-primary" style="display:block" href="/${SERVICE}/cancel/hub?${q}">멤버십 설정</a>
+      `,
+    })
+  );
+});
+
+// Benefits-recap hub — shown before the actual settings/cancel page, same
+// pattern as OrderNow Club's hub: remind the user of value received so the
+// cancel decision starts from a loss-aversion frame.
+router.get("/cancel/hub", (req, res) => {
+  const { uid, attack } = ctx(req);
+  const q = qs({ uid, attack: attack ? 1 : "" });
+  res.send(
+    page({
+      title: "SuperCart Plus 혜택",
+      accent: ACCENT,
+      uid,
+      attack,
+      body: `
+        <div class="card">
+          <p style="margin:0 0 10px;font-weight:600">이번 달 이용 혜택</p>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee"><span>무료 로켓배송</span><span><b>14회</b> 이용</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee"><span>와우 전용 할인가</span><span><b>9,300원</b> 절약</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0"><span>무료 반품</span><span><b>2회</b> 이용</span></div>
+        </div>
+        <div class="card" style="background:${ACCENT}18;border:1px solid ${ACCENT}55">
+          <p style="margin:0;font-size:13px">지금 해지하면 이번 주 <b>와우 전용 특가</b>를 못 받아요</p>
+        </div>
+        <div style="text-align:center;margin-top:20px">
+          <a class="btn-danger-small" href="/${SERVICE}/cancel?${q}">멤버십 설정</a>
+        </div>
       `,
     })
   );
@@ -55,7 +86,10 @@ router.get("/cancel", (req, res) => {
             <input type="hidden" name="uid" value="${uid}">
             <input type="hidden" name="attack" value="${attack ? 1 : ""}">
             <fieldset>
-              <label><input type="radio" name="option" value="pause" checked> 한 달만 일시정지하기</label>
+              <label>
+                <input type="radio" name="option" value="pause" checked> 한 달만 일시정지하기
+                <div style="font-size:11px;color:${ACCENT};margin:2px 0 0 24px">회원 대부분이 선택하는 옵션이에요</div>
+              </label>
               <label><input type="radio" name="option" value="downgrade"> 베이직 요금제로 변경</label>
               <label style="font-size:12px;color:#999"><input type="radio" name="option" value="full_cancel"> 멤버십 완전 해지</label>
             </fieldset>
