@@ -11,10 +11,10 @@ const AGENT_DIR = path.join(__dirname, "..", "..", "agent");
 const AGENT_ENTRY = path.join(AGENT_DIR, "src", "run.js");
 
 const SERVICES = [
-  { path: "ordernow-club", name: "OrderNow Club", price: 4900, usageThisMonth: 2, accent: "#12b886" },
-  { path: "supercart-plus", name: "SuperCart Plus", price: 4990, usageThisMonth: 8, accent: "#3182f6" },
-  { path: "primevault", name: "PrimeVault", price: 8900, usageThisMonth: 1, accent: "#7048e8" },
-  { path: "cloudstudio", name: "CloudStudio", price: 24000, usageThisMonth: 15, accent: "#f76707" },
+  { path: "ordernow-club", name: "OrderNow Club", price: 4900, usageThisMonth: 2, accent: "#12b886", daysUntilBilling: 2 },
+  { path: "supercart-plus", name: "SuperCart Plus", price: 4990, usageThisMonth: 8, accent: "#3182f6", daysUntilBilling: 12 },
+  { path: "primevault", name: "PrimeVault", price: 8900, usageThisMonth: 1, accent: "#7048e8", daysUntilBilling: 1 },
+  { path: "cloudstudio", name: "CloudStudio", price: 24000, usageThisMonth: 15, accent: "#f76707", daysUntilBilling: 20 },
 ];
 
 app.get("/api/subscriptions", async (req, res) => {
@@ -32,12 +32,15 @@ app.get("/api/subscriptions", async (req, res) => {
           feeCharged: status.feeCharged,
           suggestCancel,
           suggestionText: suggestCancel
-            ? `이번 달 ${s.usageThisMonth}번밖에 안 켠 서비스에 매달 ${s.price.toLocaleString()}원 나가고 있어요. 해지할까요?`
+            ? `이번 달 ${s.usageThisMonth}번밖에 안 켠 서비스에 매달 ${s.price.toLocaleString()}원 나가고 있어요.`
             : null,
         };
       })
     );
-    res.json({ uid, subscriptions });
+    const active = subscriptions.filter((s) => s.status === "active");
+    const totalMonthly = active.reduce((sum, s) => sum + s.price, 0);
+    const soonest = active.slice().sort((a, b) => a.daysUntilBilling - b.daysUntilBilling)[0] || null;
+    res.json({ uid, subscriptions, summary: { totalMonthly, activeCount: active.length, soonest } });
   } catch (err) {
     res.status(502).json({ error: "mock-services에 연결할 수 없습니다 (localhost:4000이 떠 있는지 확인)", detail: String(err) });
   }

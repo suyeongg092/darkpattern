@@ -6,16 +6,19 @@
 <title>안심해지</title>
 <style>
   :root {
-    --bg: #f7f7f8;
+    --bg: #f5f6f8;
     --surface: #ffffff;
+    --surface-2: #f2f3f5;
     --ink: #16181d;
     --ink-2: #5b6169;
     --muted: #93989f;
-    --line: #eceef1;
+    --line: #ececef;
     --brand: #2f6fed;
+    --brand-weak: #eaf1ff;
     --success: #1a9c72;
     --warning: #b5690b;
-    --danger: #d1373f;
+    --danger: #e0384a;
+    --danger-weak: #fdeced;
   }
   * { box-sizing: border-box; }
   body {
@@ -25,93 +28,91 @@
     -webkit-font-smoothing: antialiased;
     font-variant-numeric: tabular-nums;
   }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 60px; }
 
   .topbar {
-    display: flex; align-items: baseline; justify-content: space-between;
-    padding: 28px 0 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between; padding: 20px 0 4px;
   }
-  .wordmark { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
-  .tagline { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .wordmark { font-size: 13px; font-weight: 800; color: var(--ink-2); letter-spacing: -0.2px; }
   .session-box { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
   .reset-link {
     font-size: 12px; color: var(--ink-2); background: none; border: none;
     text-decoration: underline; cursor: pointer; padding: 0;
   }
 
+  .greeting { padding: 10px 0 20px; }
+  .greeting-title { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.3; }
+  .greeting-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+  .summary-box {
+    background: var(--surface-2); border-radius: 14px; padding: 14px 16px;
+  }
+  .summary-label { font-size: 11.5px; color: var(--ink-2); font-weight: 600; }
+  .summary-value { font-size: 19px; font-weight: 800; margin-top: 4px; letter-spacing: -0.3px; }
+  .summary-value.small { font-size: 15px; }
+
   .layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start; }
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 
   .section-label {
-    font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 0.04em; margin: 0 0 10px 2px;
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    margin: 0 0 10px 2px;
   }
 
   .list {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    background: var(--surface); border-radius: 16px;
     overflow: hidden;
   }
-  .row { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .row { padding: 16px 4px; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: none; }
 
   .row-top { display: flex; align-items: center; gap: 12px; }
   .avatar {
-    width: 36px; height: 36px; border-radius: 10px; flex: none;
-    background: #f0f1f3; color: var(--ink-2);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 13px;
+    width: 40px; height: 40px; border-radius: 50%; flex: none;
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px;
   }
   .row-id { flex: 1; min-width: 0; }
   .row-name { font-weight: 700; font-size: 14.5px; }
-  .row-status { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
-  .dot-active { background: var(--success); }
-  .row-price { text-align: right; }
-  .row-amount { font-weight: 700; font-size: 14.5px; }
-  .row-usage { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
-
-  .insight {
-    margin-top: 12px; padding: 10px 12px; border-left: 2px solid var(--brand);
-    background: #f7faff; border-radius: 0 8px 8px 0; font-size: 12.5px; color: #24406e;
-    line-height: 1.5;
+  .row-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .row-right { text-align: right; }
+  .dday {
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+    background: var(--surface-2); color: var(--ink-2);
   }
-  .note-line {
-    margin-top: 8px; font-size: 11.5px; color: var(--warning);
-  }
+  .dday.urgent { background: var(--danger-weak); color: var(--danger); }
+  .row-cancelled-tag { font-size: 11.5px; color: var(--muted); }
 
-  .actions { margin-top: 12px; display: flex; align-items: center; gap: 16px; }
+  .insight { margin-top: 10px; font-size: 12px; color: var(--ink-2); display: flex; gap: 6px; }
+  .note-line { margin-top: 6px; font-size: 11.5px; color: var(--warning); }
+
+  .actions { margin-top: 12px; display: flex; align-items: center; gap: 18px; }
   .btn-primary {
-    font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 8px;
-    border: none; background: var(--ink); color: #fff; cursor: pointer;
+    font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 10px;
+    border: none; background: var(--brand); color: #fff; cursor: pointer;
   }
   .btn-primary:disabled { opacity: .35; cursor: default; }
-  .btn-primary:hover:not(:disabled) { background: #000; }
-  .link-secondary {
-    font-size: 12px; color: var(--warning); background: none; border: none;
-    cursor: pointer; padding: 0; text-decoration: none; opacity: .85;
+  .btn-primary:hover:not(:disabled) { background: #1f5adb; }
+  .link-danger {
+    font-size: 12.5px; font-weight: 600; color: var(--danger); background: none; border: none;
+    cursor: pointer; padding: 0; opacity: .9;
   }
-  .link-secondary:hover:not(:disabled) { text-decoration: underline; }
-  .link-secondary:disabled { opacity: .3; cursor: default; }
+  .link-danger:hover:not(:disabled) { text-decoration: underline; }
+  .link-danger:disabled { opacity: .3; cursor: default; }
 
   .panel {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    background: var(--surface); border-radius: 16px;
     padding: 18px 20px; min-height: 320px; position: sticky; top: 20px;
   }
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .panel-title { font-size: 13px; font-weight: 700; }
   .panel-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
-  .live-tag {
-    font-size: 10.5px; font-weight: 700; color: var(--danger); display: none;
-    align-items: center; gap: 5px;
-  }
-  .live-tag.on { display: flex; }
-  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
 
   .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
 
   .screen {
-    width: 100%; aspect-ratio: 3 / 2; border-radius: 10px; background: #14161a;
+    width: 100%; aspect-ratio: 3 / 2; border-radius: 12px; background: #14161a;
     margin-bottom: 14px; position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
   }
@@ -120,11 +121,13 @@
   .screen-placeholder { color: #565b64; font-size: 12px; text-align: center; padding: 0 20px; line-height: 1.6; }
   .screen-badge {
     position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 700; color: #fff;
-    background: rgba(209,55,63,.9); padding: 3px 8px; border-radius: 999px; display: none;
+    background: rgba(224,56,74,.92); padding: 3px 8px; border-radius: 999px; display: none;
     align-items: center; gap: 4px;
   }
   .screen-badge.on { display: flex; }
   .screen-badge .live-dot { background: #fff; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
 
   .steps { position: relative; }
   .step { display: flex; gap: 10px; padding-bottom: 14px; position: relative; }
@@ -135,19 +138,16 @@
   .step-icon {
     width: 19px; height: 19px; border-radius: 50%; flex: none; margin-top: 1px;
     display: flex; align-items: center; justify-content: center; font-size: 11px;
-    background: #eef0f3; color: var(--muted); font-weight: 700;
+    background: var(--surface-2); color: var(--muted); font-weight: 700;
   }
   .step-icon.ok { background: #e5f5ef; color: var(--success); }
-  .step-icon.bad { background: #fbe9ea; color: var(--danger); }
-  .step-icon.pending {
-    background: transparent; border: 1.5px solid var(--line);
-  }
+  .step-icon.bad { background: var(--danger-weak); color: var(--danger); }
   .step-body { flex: 1; min-width: 0; }
   .step-label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
   .step-detail {
     margin-top: 3px; font-size: 11px; color: var(--ink-2); word-break: break-all;
     font-family: ui-monospace, "SF Mono", Menlo, monospace; line-height: 1.5;
-    background: #f7f7f8; border-radius: 6px; padding: 5px 8px;
+    background: var(--surface-2); border-radius: 6px; padding: 5px 8px;
   }
   .step-waiting { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
   .ring {
@@ -162,19 +162,32 @@
   .verdict-title { font-weight: 800; font-size: 13px; margin-bottom: 2px; }
   .verdict-ok { background: #e5f5ef; color: #0f7a58; }
   .verdict-blocked { background: #fdf2e2; color: var(--warning); }
-  .verdict-violation { background: #fbe9ea; color: var(--danger); }
+  .verdict-violation { background: var(--danger-weak); color: var(--danger); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div>
-      <div class="wordmark">안심해지</div>
-      <div class="tagline">다크패턴 뚫고, 위조는 잡아내는 AI 해지 Agent</div>
-    </div>
+    <div class="wordmark">안심해지</div>
     <div class="session-box">
       <span id="sessionLabel"></span>
       <button class="reset-link" id="resetBtn">새 데모 세션</button>
+    </div>
+  </div>
+
+  <div class="greeting">
+    <div class="greeting-title">안녕하세요 👋</div>
+    <div class="greeting-sub">다크패턴 뚫고, 위조는 잡아내는 AI 해지 Agent</div>
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="summary-box">
+      <div class="summary-label">이번 달 구독료</div>
+      <div class="summary-value" id="summaryTotal">-</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">다가오는 결제</div>
+      <div class="summary-value small" id="summarySoonest">-</div>
     </div>
   </div>
 
@@ -192,12 +205,12 @@
       </div>
       <div class="panel-sub">Agent가 실제로 보고 있는 화면과 판단 단계를 그대로 보여줍니다</div>
       <div class="screen" id="screen">
-        <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>LIVE</div>
+        <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>실시간</div>
         <img id="screenImg" alt="agent live view">
         <div class="screen-placeholder" id="screenPlaceholder">실행을 누르면<br>여기에 실제 다크패턴 사이트 화면이<br>실시간으로 나타납니다</div>
       </div>
       <div id="logPanel">
-        <div class="placeholder">왼쪽 목록에서 "AI Agent로 해지하기" 또는 "공격 시뮬레이션 테스트"를 눌러보세요.</div>
+        <div class="placeholder">왼쪽 목록에서 "AI Agent로 해지하기" 또는 "공격 시뮬레이션"을 눌러보세요.</div>
       </div>
     </div>
   </div>
@@ -209,12 +222,12 @@ if (!uid) {
   uid = 'demo-' + Date.now();
   localStorage.setItem('dp_uid', uid);
 }
-document.getElementById('sessionLabel').textContent = 'session · ' + uid.slice(-10);
+document.getElementById('sessionLabel').textContent = '세션 · ' + uid.slice(-10);
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   uid = 'demo-' + Date.now();
   localStorage.setItem('dp_uid', uid);
-  document.getElementById('sessionLabel').textContent = 'session · ' + uid.slice(-10);
+  document.getElementById('sessionLabel').textContent = '세션 · ' + uid.slice(-10);
   loadSubscriptions();
 });
 
@@ -232,6 +245,10 @@ async function loadSubscriptions() {
     cardsEl.appendChild(renderRow(s));
   }
   document.getElementById('sectionTitle').textContent = `내 구독 (${data.subscriptions.length})`;
+  document.getElementById('summaryTotal').textContent = data.summary.totalMonthly.toLocaleString() + '원';
+  document.getElementById('summarySoonest').textContent = data.summary.soonest
+    ? `${data.summary.soonest.name} · ${data.summary.soonest.daysUntilBilling}일 뒤`
+    : '없음';
 }
 
 function initials(name) {
@@ -241,25 +258,25 @@ function initials(name) {
 function renderRow(s) {
   const div = document.createElement('div');
   div.className = 'row';
-  const dotClass = s.status === 'active' ? 'dot dot-active' : 'dot';
-  const statusLabel = s.status === 'active' ? '이용중' : '해지완료';
+  const isActive = s.status === 'active';
+  const urgent = isActive && s.daysUntilBilling <= 3;
+  const rightHtml = isActive
+    ? `<span class="dday ${urgent ? 'urgent' : ''}">${s.daysUntilBilling === 0 ? '오늘 결제' : s.daysUntilBilling + '일 뒤'}</span>`
+    : `<span class="row-cancelled-tag">해지완료</span>`;
   div.innerHTML = `
     <div class="row-top">
-      <div class="avatar">${initials(s.name)}</div>
+      <div class="avatar" style="background:${s.accent}">${initials(s.name)}</div>
       <div class="row-id">
         <div class="row-name">${s.name}</div>
-        <div class="row-status"><span class="${dotClass}"></span>${statusLabel}</div>
+        <div class="row-sub">${s.price.toLocaleString()}원 · 월간 · 이번 달 ${s.usageThisMonth}회 사용</div>
       </div>
-      <div class="row-price">
-        <div class="row-amount">${s.price.toLocaleString()}원</div>
-        <div class="row-usage">이번 달 ${s.usageThisMonth}회 사용</div>
-      </div>
+      <div class="row-right">${rightHtml}</div>
     </div>
-    ${s.suggestionText ? `<div class="insight">${s.suggestionText}</div>` : ''}
+    ${s.suggestionText ? `<div class="insight">💡 ${s.suggestionText}</div>` : ''}
     ${s.note ? `<div class="note-line">최근 처리 기록 · ${s.note}</div>` : ''}
     <div class="actions">
-      <button class="btn-primary" data-service="${s.path}" data-attack="0" ${s.status !== 'active' ? 'disabled' : ''}>AI Agent로 해지하기</button>
-      <button class="link-secondary" data-service="${s.path}" data-attack="1" ${s.status !== 'active' ? 'disabled' : ''}>공격 시뮬레이션 테스트</button>
+      <button class="btn-primary" data-service="${s.path}" data-attack="0" ${!isActive ? 'disabled' : ''}>AI Agent로 해지하기</button>
+      <button class="link-danger" data-service="${s.path}" data-attack="1" ${!isActive ? 'disabled' : ''}>공격 시뮬레이션으로 테스트</button>
     </div>
   `;
   div.querySelectorAll('button[data-service]').forEach((btn) => {
