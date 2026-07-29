@@ -69,7 +69,13 @@ async function main() {
   // resolve normally (e.g. after a plain `npx playwright install`).
   const sandboxChromium = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium";
   const launchOpts = { headless };
-  if (fs.existsSync(sandboxChromium)) launchOpts.executablePath = sandboxChromium;
+  if (fs.existsSync(sandboxChromium)) {
+    launchOpts.executablePath = sandboxChromium;
+    // This pinned playwright version predates that sandbox browser's Chrome
+    // release, so its old/new-headless auto-detection guesses wrong and
+    // passes a --headless flag value Chrome no longer supports. Force it.
+    if (headless) launchOpts.args = ["--headless=new"];
+  }
   const browser = await chromium.launch(launchOpts);
   const page = await browser.newPage();
 

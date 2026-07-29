@@ -3,23 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>안심해지 — AI 해지 Agent</title>
+<title>안심해지</title>
 <style>
   :root {
-    --bg: #f2f4f6;
-    --card: #ffffff;
-    --ink: #191f28;
-    --ink-2: #4e5968;
-    --muted: #8b95a1;
-    --line: #eef0f2;
-    --brand: #3182f6;
-    --brand-weak: #eaf2ff;
-    --success: #12b886;
-    --success-weak: #e7f9f4;
-    --warning: #b25e00;
-    --warning-weak: #fff4e2;
-    --danger: #e0293e;
-    --danger-weak: #fdecee;
+    --bg: #f7f7f8;
+    --surface: #ffffff;
+    --ink: #16181d;
+    --ink-2: #5b6169;
+    --muted: #93989f;
+    --line: #eceef1;
+    --brand: #2f6fed;
+    --success: #1a9c72;
+    --warning: #b5690b;
+    --danger: #d1373f;
   }
   * { box-sizing: border-box; }
   body {
@@ -27,166 +23,161 @@
       "Apple SD Gothic Neo", "Malgun Gothic", Roboto, sans-serif;
     background: var(--bg); color: var(--ink); margin: 0;
     -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
   }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 60px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
 
   .topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 22px 0 26px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 28px 0 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px;
   }
-  .brand-mark { display: flex; align-items: center; gap: 10px; }
-  .logo {
-    width: 34px; height: 34px; border-radius: 10px;
-    background: linear-gradient(135deg, #3182f6, #12b8c4);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 800; font-size: 15px;
+  .wordmark { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+  .tagline { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .session-box { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+  .reset-link {
+    font-size: 12px; color: var(--ink-2); background: none; border: none;
+    text-decoration: underline; cursor: pointer; padding: 0;
   }
-  .brand-text { line-height: 1.25; }
-  .brand-title { font-size: 17px; font-weight: 800; letter-spacing: -0.2px; }
-  .brand-sub { font-size: 12px; color: var(--muted); }
 
-  .session-box { display: flex; align-items: center; gap: 10px; }
-  .session-pill {
-    font-size: 12px; color: var(--muted); background: #fff; border: 1px solid var(--line);
-    padding: 6px 12px; border-radius: 999px;
-  }
-  .reset-btn {
-    font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 999px;
-    border: none; background: var(--ink); color: #fff; cursor: pointer;
-  }
-  .reset-btn:hover { opacity: .85; }
+  .layout { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 
-  .layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
-  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
-
-  .section-title { font-size: 14px; font-weight: 700; color: var(--ink-2); margin: 2px 0 12px; }
-
-  .cards { display: flex; flex-direction: column; gap: 12px; }
-  .card {
-    background: var(--card); border-radius: 20px; padding: 20px;
-    box-shadow: 0 1px 2px rgba(25,31,40,.04), 0 8px 24px rgba(25,31,40,.03);
-    transition: box-shadow .15s ease;
+  .section-label {
+    font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.04em; margin: 0 0 10px 2px;
   }
-  .card-top { display: flex; align-items: center; gap: 12px; }
+
+  .list {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden;
+  }
+  .row { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: none; }
+
+  .row-top { display: flex; align-items: center; gap: 12px; }
   .avatar {
-    width: 42px; height: 42px; border-radius: 12px; flex: none;
+    width: 36px; height: 36px; border-radius: 10px; flex: none;
+    background: #f0f1f3; color: var(--ink-2);
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 800; font-size: 16px;
+    font-weight: 700; font-size: 13px;
   }
-  .card-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .card-name { font-weight: 700; font-size: 15px; }
-  .status-pill {
-    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
-  }
-  .status-active { background: var(--success-weak); color: var(--success); }
-  .status-cancelled { background: #f1f2f4; color: var(--muted); }
-  .card-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .row-id { flex: 1; min-width: 0; }
+  .row-name { font-weight: 700; font-size: 14.5px; }
+  .row-status { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .dot-active { background: var(--success); }
+  .row-price { text-align: right; }
+  .row-amount { font-weight: 700; font-size: 14.5px; }
+  .row-usage { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
 
   .insight {
-    margin-top: 14px; display: flex; gap: 8px; align-items: flex-start;
-    background: var(--brand-weak); border-radius: 14px; padding: 12px 14px;
-    font-size: 13px; color: #1c56c2; line-height: 1.45;
-  }
-  .insight .spark { flex: none; }
-
-  .note-line {
-    margin-top: 10px; font-size: 12px; color: var(--warning);
-    background: var(--warning-weak); border-radius: 10px; padding: 8px 10px;
-  }
-
-  .actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .btn {
-    font-size: 13px; padding: 10px 16px; border-radius: 999px; border: none;
-    cursor: pointer; font-weight: 700; transition: opacity .15s ease;
-  }
-  .btn-primary { background: var(--ink); color: #fff; }
-  .btn-secondary {
-    background: #fff; color: var(--warning); border: 1px solid #f0dcb8;
-  }
-  .btn:disabled { opacity: .4; cursor: default; }
-  .btn:hover:not(:disabled) { opacity: .85; }
-
-  .panel {
-    background: var(--card); border-radius: 20px; padding: 20px;
-    box-shadow: 0 1px 2px rgba(25,31,40,.04), 0 8px 24px rgba(25,31,40,.03);
-    min-height: 320px; position: sticky; top: 20px;
-  }
-  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .panel-title { font-size: 14px; font-weight: 700; }
-  .live-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--danger);
-    animation: pulse 1s infinite ease-in-out;
-  }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
-
-  .placeholder { font-size: 13px; color: var(--muted); padding: 8px 2px; line-height: 1.6; }
-
-  .timeline { position: relative; padding-left: 22px; }
-  .timeline::before {
-    content: ""; position: absolute; left: 5px; top: 4px; bottom: 4px; width: 2px;
-    background: var(--line);
-  }
-  .tl-item { position: relative; padding-bottom: 16px; }
-  .tl-item::before {
-    content: ""; position: absolute; left: -22px; top: 3px; width: 10px; height: 10px;
-    border-radius: 50%; background: var(--brand); border: 2px solid #fff;
-    box-shadow: 0 0 0 2px var(--brand-weak);
-  }
-  .tl-step { font-size: 12.5px; font-weight: 700; color: var(--ink); }
-  .tl-detail {
-    margin-top: 4px; font-size: 11.5px; color: var(--ink-2); word-break: break-all;
-    background: #f8f9fb; border-radius: 8px; padding: 6px 9px;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  }
-
-  .verdict {
-    margin-top: 6px; padding: 14px 16px; border-radius: 16px; font-size: 13px;
+    margin-top: 12px; padding: 10px 12px; border-left: 2px solid var(--brand);
+    background: #f7faff; border-radius: 0 8px 8px 0; font-size: 12.5px; color: #24406e;
     line-height: 1.5;
   }
-  .verdict-title { font-weight: 800; font-size: 13.5px; margin-bottom: 3px; }
-  .verdict-ok { background: var(--success-weak); color: #0a8a6f; }
-  .verdict-blocked { background: var(--warning-weak); color: var(--warning); }
-  .verdict-violation { background: var(--danger-weak); color: var(--danger); }
+  .note-line {
+    margin-top: 8px; font-size: 11.5px; color: var(--warning);
+  }
 
-  .spinner { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); padding: 4px 2px; }
+  .actions { margin-top: 12px; display: flex; align-items: center; gap: 16px; }
+  .btn-primary {
+    font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 8px;
+    border: none; background: var(--ink); color: #fff; cursor: pointer;
+  }
+  .btn-primary:disabled { opacity: .35; cursor: default; }
+  .btn-primary:hover:not(:disabled) { background: #000; }
+  .link-secondary {
+    font-size: 12px; color: var(--warning); background: none; border: none;
+    cursor: pointer; padding: 0; text-decoration: none; opacity: .85;
+  }
+  .link-secondary:hover:not(:disabled) { text-decoration: underline; }
+  .link-secondary:disabled { opacity: .3; cursor: default; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; min-height: 320px; position: sticky; top: 20px;
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .panel-title { font-size: 13px; font-weight: 700; }
+  .panel-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+  .live-tag {
+    font-size: 10.5px; font-weight: 700; color: var(--danger); display: none;
+    align-items: center; gap: 5px;
+  }
+  .live-tag.on { display: flex; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+
+  .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
+
+  .steps { position: relative; }
+  .step { display: flex; gap: 10px; padding-bottom: 14px; position: relative; }
+  .step:not(:last-child)::before {
+    content: ""; position: absolute; left: 9px; top: 22px; bottom: -2px; width: 1.5px;
+    background: var(--line);
+  }
+  .step-icon {
+    width: 19px; height: 19px; border-radius: 50%; flex: none; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+    background: #eef0f3; color: var(--muted); font-weight: 700;
+  }
+  .step-icon.ok { background: #e5f5ef; color: var(--success); }
+  .step-icon.bad { background: #fbe9ea; color: var(--danger); }
+  .step-icon.pending {
+    background: transparent; border: 1.5px solid var(--line);
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .step-detail {
+    margin-top: 3px; font-size: 11px; color: var(--ink-2); word-break: break-all;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; line-height: 1.5;
+    background: #f7f7f8; border-radius: 6px; padding: 5px 8px;
+  }
+  .step-waiting { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
   .ring {
-    width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line);
-    border-top-color: var(--brand); animation: spin .7s linear infinite;
+    width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line);
+    border-top-color: var(--brand); animation: spin .7s linear infinite; flex: none;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .verdict {
+    margin-top: 8px; padding: 12px 14px; border-radius: 10px; font-size: 12.5px; line-height: 1.5;
+  }
+  .verdict-title { font-weight: 800; font-size: 13px; margin-bottom: 2px; }
+  .verdict-ok { background: #e5f5ef; color: #0f7a58; }
+  .verdict-blocked { background: #fdf2e2; color: var(--warning); }
+  .verdict-violation { background: #fbe9ea; color: var(--danger); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div class="brand-mark">
-      <div class="logo">안</div>
-      <div class="brand-text">
-        <div class="brand-title">안심해지</div>
-        <div class="brand-sub">다크패턴 뚫고, 위조는 잡아내는 AI 해지 Agent</div>
-      </div>
+    <div>
+      <div class="wordmark">안심해지</div>
+      <div class="tagline">다크패턴 뚫고, 위조는 잡아내는 AI 해지 Agent</div>
     </div>
     <div class="session-box">
-      <span class="session-pill" id="sessionLabel"></span>
-      <button class="reset-btn" id="resetBtn">새 데모 세션</button>
+      <span id="sessionLabel"></span>
+      <button class="reset-link" id="resetBtn">새 데모 세션</button>
     </div>
   </div>
 
   <div class="layout">
     <div>
-      <div class="section-title" id="sectionTitle">내 구독</div>
-      <div class="cards" id="cards">
-        <div class="placeholder">불러오는 중...</div>
+      <div class="section-label" id="sectionTitle">내 구독</div>
+      <div class="list" id="cards">
+        <div class="row"><div class="placeholder">불러오는 중...</div></div>
       </div>
     </div>
 
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">실행 로그</div>
-        <div class="live-dot" id="liveDot" style="display:none"></div>
+        <div class="panel-title">실행 파이프라인</div>
+        <div class="live-tag" id="liveTag"><span class="live-dot"></span>LIVE</div>
       </div>
+      <div class="panel-sub">Agent가 실제로 수행하는 각 단계를 실시간으로 표시합니다</div>
       <div id="logPanel">
-        <div class="placeholder">구독 카드에서 "AI Agent로 해지하기" 또는 "공격 시뮬레이션으로 테스트"를 눌러보세요. Agent가 실제 브라우저를 조작하는 과정과 무결성 검증 단계가 여기 실시간으로 표시됩니다.</div>
+        <div class="placeholder">왼쪽 목록에서 "AI Agent로 해지하기" 또는 "공격 시뮬레이션 테스트"를 눌러보세요.</div>
       </div>
     </div>
   </div>
@@ -209,16 +200,16 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
 async function loadSubscriptions() {
   const cardsEl = document.getElementById('cards');
-  cardsEl.innerHTML = '<div class="placeholder">불러오는 중...</div>';
+  cardsEl.innerHTML = '<div class="row"><div class="placeholder">불러오는 중...</div></div>';
   const res = await fetch('/api/subscriptions?uid=' + encodeURIComponent(uid));
   const data = await res.json();
   if (data.error) {
-    cardsEl.innerHTML = '<div class="placeholder">' + data.error + '</div>';
+    cardsEl.innerHTML = '<div class="row"><div class="placeholder">' + data.error + '</div></div>';
     return;
   }
   cardsEl.innerHTML = '';
   for (const s of data.subscriptions) {
-    cardsEl.appendChild(renderCard(s));
+    cardsEl.appendChild(renderRow(s));
   }
   document.getElementById('sectionTitle').textContent = `내 구독 (${data.subscriptions.length})`;
 }
@@ -227,27 +218,28 @@ function initials(name) {
   return name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || name[0];
 }
 
-function renderCard(s) {
+function renderRow(s) {
   const div = document.createElement('div');
-  div.className = 'card';
-  const statusClass = s.status === 'active' ? 'status-active' : 'status-cancelled';
+  div.className = 'row';
+  const dotClass = s.status === 'active' ? 'dot dot-active' : 'dot';
   const statusLabel = s.status === 'active' ? '이용중' : '해지완료';
   div.innerHTML = `
-    <div class="card-top">
-      <div class="avatar" style="background:${s.accent}">${initials(s.name)}</div>
-      <div style="flex:1">
-        <div class="card-name-row">
-          <span class="card-name">${s.name}</span>
-          <span class="status-pill ${statusClass}">${statusLabel}</span>
-        </div>
-        <div class="card-meta">월 ${s.price.toLocaleString()}원 · 이번 달 ${s.usageThisMonth}회 사용</div>
+    <div class="row-top">
+      <div class="avatar">${initials(s.name)}</div>
+      <div class="row-id">
+        <div class="row-name">${s.name}</div>
+        <div class="row-status"><span class="${dotClass}"></span>${statusLabel}</div>
+      </div>
+      <div class="row-price">
+        <div class="row-amount">${s.price.toLocaleString()}원</div>
+        <div class="row-usage">이번 달 ${s.usageThisMonth}회 사용</div>
       </div>
     </div>
-    ${s.suggestionText ? `<div class="insight"><span class="spark">✨</span><span>${s.suggestionText}</span></div>` : ''}
+    ${s.suggestionText ? `<div class="insight">${s.suggestionText}</div>` : ''}
     ${s.note ? `<div class="note-line">최근 처리 기록 · ${s.note}</div>` : ''}
     <div class="actions">
-      <button class="btn btn-primary" data-service="${s.path}" data-attack="0" ${s.status !== 'active' ? 'disabled' : ''}>AI Agent로 해지하기</button>
-      <button class="btn btn-secondary" data-service="${s.path}" data-attack="1" ${s.status !== 'active' ? 'disabled' : ''}>공격 시뮬레이션으로 테스트</button>
+      <button class="btn-primary" data-service="${s.path}" data-attack="0" ${s.status !== 'active' ? 'disabled' : ''}>AI Agent로 해지하기</button>
+      <button class="link-secondary" data-service="${s.path}" data-attack="1" ${s.status !== 'active' ? 'disabled' : ''}>공격 시뮬레이션 테스트</button>
     </div>
   `;
   div.querySelectorAll('button[data-service]').forEach((btn) => {
@@ -256,59 +248,76 @@ function renderCard(s) {
   return div;
 }
 
-async function runAgent(service, attack, cardEl) {
+function runAgent(service, attack, rowEl) {
   const logPanel = document.getElementById('logPanel');
-  const liveDot = document.getElementById('liveDot');
-  const buttons = cardEl.querySelectorAll('button');
+  const liveTag = document.getElementById('liveTag');
+  const buttons = rowEl.querySelectorAll('button');
   buttons.forEach((b) => (b.disabled = true));
-  liveDot.style.display = 'block';
-  logPanel.innerHTML = `<div class="spinner"><span class="ring"></span>Agent 실행 중${attack ? ' · 공격 시뮬레이션' : ''}... 브라우저 자동화가 진행되고 있어요.</div>`;
 
-  const res = await fetch('/api/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ service, uid, attack }),
-  });
-  const data = await res.json();
-  liveDot.style.display = 'none';
-
-  if (data.error) {
-    logPanel.innerHTML = '<div class="placeholder">오류: ' + data.error + '</div>';
-    await loadSubscriptions();
-    return;
-  }
-
-  renderLog(data.logs, data.verdict);
-  await loadSubscriptions();
-}
-
-function renderLog(logs, verdict) {
-  const logPanel = document.getElementById('logPanel');
   logPanel.innerHTML = '';
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'steps';
+  logPanel.appendChild(stepsEl);
+  const waitingEl = document.createElement('div');
+  waitingEl.className = 'step-waiting';
+  waitingEl.innerHTML = '<span class="ring"></span>Agent 연결 중...';
+  logPanel.appendChild(waitingEl);
+  liveTag.classList.add('on');
 
-  const timeline = document.createElement('div');
-  timeline.className = 'timeline';
-  for (const entry of logs) {
-    const item = document.createElement('div');
-    item.className = 'tl-item';
-    item.innerHTML = `<div class="tl-step">${entry.step}</div>` +
-      (entry.detail ? `<div class="tl-detail">${escapeHtml(entry.detail)}</div>` : '');
-    timeline.appendChild(item);
-  }
-  logPanel.appendChild(timeline);
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
+  const es = new EventSource('/api/run-stream?' + qs.toString());
 
-  const verdictEl = document.createElement('div');
-  if (verdict.blocked) {
-    verdictEl.className = 'verdict verdict-blocked';
-    verdictEl.innerHTML = `<div class="verdict-title">실행 전 자동 차단됨</div>${escapeHtml(verdict.reason)}`;
-  } else if (verdict.integrityViolation) {
-    verdictEl.className = 'verdict verdict-violation';
-    verdictEl.innerHTML = `<div class="verdict-title">무결성 위반 탐지됨</div>${escapeHtml(verdict.reason)}`;
-  } else {
-    verdictEl.className = 'verdict verdict-ok';
-    verdictEl.innerHTML = `<div class="verdict-title">정상 처리 완료</div>무결성 검증 통과 · ${verdict.durationMs}ms`;
-  }
-  logPanel.appendChild(verdictEl);
+  es.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === 'log') {
+      const step = document.createElement('div');
+      step.className = 'step';
+      const isBad = /🛑/.test(msg.step);
+      const isGood = /✅/.test(msg.step);
+      const iconClass = isBad ? 'bad' : isGood ? 'ok' : '';
+      const iconGlyph = isBad ? '✕' : isGood ? '✓' : '';
+      step.innerHTML = `
+        <div class="step-icon ${iconClass}">${iconGlyph}</div>
+        <div class="step-body">
+          <div class="step-label">${escapeHtml(msg.step.replace(/^\d+\.\s*/, '').replace(/[🛑✅]\s*/, ''))}</div>
+          ${msg.detail ? `<div class="step-detail">${escapeHtml(msg.detail)}</div>` : ''}
+        </div>`;
+      stepsEl.appendChild(step);
+      waitingEl.innerHTML = '<span class="ring"></span>다음 단계 진행 중...';
+      logPanel.appendChild(waitingEl); // keep waiting indicator at bottom
+    } else if (msg.type === 'verdict') {
+      waitingEl.remove();
+      const verdictEl = document.createElement('div');
+      const v = msg.verdict;
+      if (v.blocked) {
+        verdictEl.className = 'verdict verdict-blocked';
+        verdictEl.innerHTML = `<div class="verdict-title">실행 전 자동 차단됨</div>${escapeHtml(v.reason)}`;
+      } else if (v.integrityViolation) {
+        verdictEl.className = 'verdict verdict-violation';
+        verdictEl.innerHTML = `<div class="verdict-title">무결성 위반 탐지됨</div>${escapeHtml(v.reason)}`;
+      } else {
+        verdictEl.className = 'verdict verdict-ok';
+        verdictEl.innerHTML = `<div class="verdict-title">정상 처리 완료</div>무결성 검증 통과 · ${v.durationMs}ms`;
+      }
+      logPanel.appendChild(verdictEl);
+    } else if (msg.type === 'error') {
+      waitingEl.remove();
+      const errEl = document.createElement('div');
+      errEl.className = 'placeholder';
+      errEl.textContent = '오류: ' + msg.message;
+      logPanel.appendChild(errEl);
+    } else if (msg.type === 'done') {
+      liveTag.classList.remove('on');
+      es.close();
+      loadSubscriptions();
+    }
+  };
+
+  es.onerror = () => {
+    waitingEl.remove();
+    liveTag.classList.remove('on');
+    es.close();
+  };
 }
 
 function escapeHtml(str) {
