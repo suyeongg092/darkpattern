@@ -1,0 +1,11 @@
+{
+  "name": "darkpattern-agent-integrity",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "mock-services"
+  ],
+  "scripts": {
+    "mock:start": "npm run start --workspace mock-services"
+  }
+}
