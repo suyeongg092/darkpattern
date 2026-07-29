@@ -46,7 +46,9 @@ app.use("/supercart-plus", supercartPlus);
 app.use("/primevault", primevault);
 app.use("/cloudstudio", cloudstudio);
 
-const PORT = process.env.PORT || 4000;
+// Named MOCK_PORT (not PORT) so this can run in the same container as
+// dashboard/, which binds PORT for the public-facing web service.
+const PORT = process.env.MOCK_PORT || 4000;
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Mock dark-pattern services running on http://localhost:${PORT}`);

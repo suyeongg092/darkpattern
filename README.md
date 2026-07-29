@@ -91,3 +91,22 @@ node scripts/evaluate.js 5   # 서비스 4개 x (정상/공격) x 5회 = 40회 �
 `agent/eval-results.json`에 원본 결과를 저장한다. 로컬에서 3회 반복 기준 공격 차단률
 100%, 정상 성공률 100%(오탐 0%), 평균 지연 1.3~1.6초가 나왔다 — 보고서의 "5주차: 성공률/
 차단률/오탐률/지연시간 측정" 항목에 그대로 쓸 수 있는 수치다.
+
+## 공개 URL로 배포하기 (Render)
+
+`mock-services` + `agent` + `dashboard`를 컨테이너 하나로 묶은 `Dockerfile`이 준비되어
+있다. 팀원들과 공유할 실제 URL이 필요하면:
+
+1. [render.com](https://render.com)에서 GitHub 계정으로 무료 가입
+2. New → Blueprint → 이 저장소 선택 (루트의 `render.yaml`을 자동으로 인식함)
+3. Deploy 클릭 — 첫 빌드는 Playwright 이미지(약 2GB) 때문에 5~10분 정도 걸림
+4. 완료되면 `https://darkpattern-agent-integrity-XXXX.onrender.com` 같은 URL이 발급됨
+
+**주의사항**
+- Render 무료 플랜은 15분간 요청이 없으면 슬립 상태가 되고, 다음 요청에서 10~30초 정도
+  깨어나는 지연(cold start)이 있다. 시연/발표 직전에 한 번 미리 접속해두면 지연 없이 바로
+  쓸 수 있다.
+- 공개 URL이므로 아무나 `/api/run`을 호출해 브라우저 자동화를 실행시킬 수 있다. 팀 내부
+  공유·데모 용도로만 링크를 쓰고, 무제한 공개 배포로 남겨두지 않는 걸 권장한다.
+- 로컬 Docker로 먼저 확인하려면: `docker build -t darkpattern . && docker run -p 5000:5000
+  -e PORT=5000 darkpattern` 후 `http://localhost:5000` 접속.

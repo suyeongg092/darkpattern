@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: darkpattern-agent-integrity
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: AGENT_TOKEN_SECRET
+        generateValue: true
