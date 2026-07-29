@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "mock-services"
+    "mock-services",
+    "agent"
   ],
   "scripts": {
     "mock:start": "npm run start --workspace mock-services"
