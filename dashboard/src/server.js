@@ -11,10 +11,10 @@ const AGENT_DIR = path.join(__dirname, "..", "..", "agent");
 const AGENT_ENTRY = path.join(AGENT_DIR, "src", "run.js");
 
 const SERVICES = [
-  { path: "ordernow-club", name: "OrderNow Club", price: 4900, usageThisMonth: 2, accent: "#2ac1bc" },
-  { path: "supercart-plus", name: "SuperCart Plus", price: 4990, usageThisMonth: 8, accent: "#e2493c" },
-  { path: "primevault", name: "PrimeVault", price: 8900, usageThisMonth: 1, accent: "#146eb4" },
-  { path: "cloudstudio", name: "CloudStudio", price: 24000, usageThisMonth: 15, accent: "#da1f26" },
+  { path: "ordernow-club", name: "OrderNow Club", price: 4900, usageThisMonth: 2, accent: "#12b886" },
+  { path: "supercart-plus", name: "SuperCart Plus", price: 4990, usageThisMonth: 8, accent: "#3182f6" },
+  { path: "primevault", name: "PrimeVault", price: 8900, usageThisMonth: 1, accent: "#7048e8" },
+  { path: "cloudstudio", name: "CloudStudio", price: 24000, usageThisMonth: 15, accent: "#f76707" },
 ];
 
 app.get("/api/subscriptions", async (req, res) => {
