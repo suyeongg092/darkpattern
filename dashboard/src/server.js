@@ -83,7 +83,7 @@ app.get("/api/run-stream", (req, res) => {
   });
   const send = (payload) => res.write(`data: ${JSON.stringify(payload)}\n\n`);
 
-  const child = spawn("node", args, { cwd: AGENT_DIR });
+  const child = spawn("node", args, { cwd: AGENT_DIR, env: { ...process.env, STREAM_FRAMES: "1" } });
   let buffer = "";
 
   child.stdout.on("data", (chunk) => {
@@ -92,6 +92,11 @@ app.get("/api/run-stream", (req, res) => {
     buffer = lines.pop(); // keep the last (possibly incomplete) line
 
     for (const line of lines) {
+      const frameMatch = line.match(/^FRAME:(.*)$/);
+      if (frameMatch) {
+        send({ type: "frame", data: frameMatch[1] });
+        continue;
+      }
       const resultMatch = line.match(/^RESULT_JSON:(.*)$/);
       if (resultMatch) {
         const { verdict } = JSON.parse(resultMatch[1]);

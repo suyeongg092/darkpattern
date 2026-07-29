@@ -32,6 +32,27 @@ async function fetchStatus(service, uid) {
   return res.json();
 }
 
+// Streams the actual page the agent is looking at, live, as JPEG frames over
+// CDP — not a recap after the fact. Printed as its own stdout line so a
+// parent process (the dashboard) can forward each frame the moment it's
+// captured. Gated behind an env var so plain CLI/eval runs stay lightweight.
+async function startScreencast(page) {
+  if (process.env.STREAM_FRAMES !== "1") return null;
+  const cdp = await page.context().newCDPSession(page);
+  cdp.on("Page.screencastFrame", ({ data, sessionId }) => {
+    console.log("FRAME:" + data);
+    cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
+  });
+  await cdp.send("Page.startScreencast", {
+    format: "jpeg",
+    quality: 60,
+    maxWidth: 720,
+    maxHeight: 480,
+    everyNthFrame: 1,
+  });
+  return cdp;
+}
+
 // Prints a human-readable verdict for the terminal, plus a single-line
 // RESULT_JSON marker that other processes (the dashboard server, the
 // evaluation script) parse out of captured stdout instead of scraping the
@@ -77,7 +98,8 @@ async function main() {
     if (headless) launchOpts.args = ["--headless=new"];
   }
   const browser = await chromium.launch(launchOpts);
-  const page = await browser.newPage();
+  const page = await browser.newPage({ viewport: { width: 720, height: 480 } });
+  const cdp = await startScreencast(page);
 
   const { formInfo, submit } = await EXECUTORS[service].run(page, {
     baseUrl: `${MOCK_BASE}/${service}`,

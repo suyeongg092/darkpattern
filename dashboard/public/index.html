@@ -110,6 +110,22 @@
 
   .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
 
+  .screen {
+    width: 100%; aspect-ratio: 3 / 2; border-radius: 10px; background: #14161a;
+    margin-bottom: 14px; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .screen img { width: 100%; height: 100%; object-fit: contain; display: none; }
+  .screen img.on { display: block; }
+  .screen-placeholder { color: #565b64; font-size: 12px; text-align: center; padding: 0 20px; line-height: 1.6; }
+  .screen-badge {
+    position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 700; color: #fff;
+    background: rgba(209,55,63,.9); padding: 3px 8px; border-radius: 999px; display: none;
+    align-items: center; gap: 4px;
+  }
+  .screen-badge.on { display: flex; }
+  .screen-badge .live-dot { background: #fff; }
+
   .steps { position: relative; }
   .step { display: flex; gap: 10px; padding-bottom: 14px; position: relative; }
   .step:not(:last-child)::before {
@@ -172,10 +188,14 @@
 
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">실행 파이프라인</div>
-        <div class="live-tag" id="liveTag"><span class="live-dot"></span>LIVE</div>
+        <div class="panel-title">실행 화면 + 파이프라인</div>
       </div>
-      <div class="panel-sub">Agent가 실제로 수행하는 각 단계를 실시간으로 표시합니다</div>
+      <div class="panel-sub">Agent가 실제로 보고 있는 화면과 판단 단계를 그대로 보여줍니다</div>
+      <div class="screen" id="screen">
+        <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>LIVE</div>
+        <img id="screenImg" alt="agent live view">
+        <div class="screen-placeholder" id="screenPlaceholder">실행을 누르면<br>여기에 실제 다크패턴 사이트 화면이<br>실시간으로 나타납니다</div>
+      </div>
       <div id="logPanel">
         <div class="placeholder">왼쪽 목록에서 "AI Agent로 해지하기" 또는 "공격 시뮬레이션 테스트"를 눌러보세요.</div>
       </div>
@@ -250,9 +270,16 @@ function renderRow(s) {
 
 function runAgent(service, attack, rowEl) {
   const logPanel = document.getElementById('logPanel');
-  const liveTag = document.getElementById('liveTag');
+  const screenImg = document.getElementById('screenImg');
+  const screenPlaceholder = document.getElementById('screenPlaceholder');
+  const screenBadge = document.getElementById('screenBadge');
   const buttons = rowEl.querySelectorAll('button');
   buttons.forEach((b) => (b.disabled = true));
+
+  screenImg.classList.remove('on');
+  screenPlaceholder.style.display = 'block';
+  screenPlaceholder.textContent = '연결 중...';
+  screenBadge.classList.add('on');
 
   logPanel.innerHTML = '';
   const stepsEl = document.createElement('div');
@@ -262,14 +289,17 @@ function runAgent(service, attack, rowEl) {
   waitingEl.className = 'step-waiting';
   waitingEl.innerHTML = '<span class="ring"></span>Agent 연결 중...';
   logPanel.appendChild(waitingEl);
-  liveTag.classList.add('on');
 
   const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
   const es = new EventSource('/api/run-stream?' + qs.toString());
 
   es.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if (msg.type === 'log') {
+    if (msg.type === 'frame') {
+      screenPlaceholder.style.display = 'none';
+      screenImg.src = 'data:image/jpeg;base64,' + msg.data;
+      screenImg.classList.add('on');
+    } else if (msg.type === 'log') {
       const step = document.createElement('div');
       step.className = 'step';
       const isBad = /🛑/.test(msg.step);
@@ -307,7 +337,7 @@ function runAgent(service, attack, rowEl) {
       errEl.textContent = '오류: ' + msg.message;
       logPanel.appendChild(errEl);
     } else if (msg.type === 'done') {
-      liveTag.classList.remove('on');
+      screenBadge.classList.remove('on');
       es.close();
       loadSubscriptions();
     }
@@ -315,7 +345,7 @@ function runAgent(service, attack, rowEl) {
 
   es.onerror = () => {
     waitingEl.remove();
-    liveTag.classList.remove('on');
+    screenBadge.classList.remove('on');
     es.close();
   };
 }
