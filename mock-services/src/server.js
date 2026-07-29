@@ -50,8 +50,12 @@ app.use("/cloudstudio", cloudstudio);
 // dashboard/, which binds PORT for the public-facing web service.
 const PORT = process.env.MOCK_PORT || 4000;
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Mock dark-pattern services running on http://localhost:${PORT}`);
+  // Bind loopback-only: in the deployed container this must stay invisible
+  // to Render's automatic port scan (which targets 0.0.0.0 listeners), or it
+  // can get picked as the routed port instead of dashboard's.
+  const HOST = process.env.MOCK_HOST || "127.0.0.1";
+  app.listen(PORT, HOST, () => {
+    console.log(`Mock dark-pattern services running on http://${HOST}:${PORT}`);
   });
 }
 
