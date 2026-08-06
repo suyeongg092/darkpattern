@@ -37,6 +37,9 @@ async function fetchStatus(service, uid) {
 // CDP — not a recap after the fact. Printed as its own stdout line so a
 // parent process (the dashboard) can forward each frame the moment it's
 // captured. Gated behind an env var so plain CLI/eval runs stay lightweight.
+const DEVICE = process.env.DEVICE === "mobile" ? "mobile" : "pc";
+const VIEWPORT = DEVICE === "mobile" ? { width: 390, height: 844 } : { width: 960, height: 480 };
+
 async function startScreencast(page) {
   if (process.env.STREAM_FRAMES !== "1") return null;
   const cdp = await page.context().newCDPSession(page);
@@ -47,8 +50,8 @@ async function startScreencast(page) {
   await cdp.send("Page.startScreencast", {
     format: "jpeg",
     quality: 85,
-    maxWidth: 960,
-    maxHeight: 480,
+    maxWidth: VIEWPORT.width,
+    maxHeight: VIEWPORT.height,
     everyNthFrame: 1,
   });
   return cdp;
@@ -99,7 +102,7 @@ async function main() {
     if (headless) launchOpts.args = ["--headless=new"];
   }
   const browser = await chromium.launch(launchOpts);
-  const page = await browser.newPage({ viewport: { width: 960, height: 480 } });
+  const page = await browser.newPage({ viewport: VIEWPORT });
   await injectCursor(page);
   const cdp = await startScreencast(page);
 
@@ -118,6 +121,7 @@ async function main() {
       service,
       uid,
       attack,
+      device: DEVICE,
       blocked: true,
       executed: false,
       stage: "pre-execution",
@@ -145,6 +149,7 @@ async function main() {
       service,
       uid,
       attack,
+      device: DEVICE,
       blocked: true,
       executed: false,
       stage: "token",
@@ -173,6 +178,7 @@ async function main() {
       service,
       uid,
       attack,
+      device: DEVICE,
       blocked: false,
       executed: true,
       integrityViolation: true,
@@ -190,6 +196,7 @@ async function main() {
     service,
     uid,
     attack,
+    device: DEVICE,
     blocked: false,
     executed: true,
     integrityViolation: false,
