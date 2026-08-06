@@ -31,7 +31,7 @@
     font-variant-numeric: tabular-nums;
   }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 60px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
 
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -55,7 +55,7 @@
   .page-title { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
   .page-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 
-  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; max-width: 620px; }
   .summary-box {
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
   }
@@ -63,7 +63,75 @@
   .summary-value { font-size: 19px; font-weight: 800; margin-top: 5px; letter-spacing: -0.2px; color: var(--accent); }
   .summary-value.small { font-size: 14px; color: var(--ink); }
 
-  .layout { display: grid; grid-template-columns: 1.05fr 1fr; gap: 20px; align-items: start; }
+  /* --- live screen section (full width, above the two-column layout) --- */
+  .screen-section { margin-bottom: 24px; }
+  .screen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .screen-title-group { display: flex; align-items: baseline; gap: 8px; }
+  .panel-title {
+    font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-2);
+  }
+  .screen-sub { font-size: 11.5px; color: var(--muted); }
+  .screen-controls { display: flex; align-items: center; gap: 14px; }
+
+  .toggle { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); cursor: pointer; user-select: none; }
+  .toggle input { display: none; }
+  .toggle-track {
+    width: 30px; height: 17px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border);
+    position: relative; transition: background .15s;
+  }
+  .toggle-track::after {
+    content: ""; position: absolute; top: 1px; left: 1px; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--muted); transition: transform .15s, background .15s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--accent-weak); border-color: var(--accent); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(13px); background: var(--accent); }
+
+  .ghost-btn {
+    font-size: 12px; color: var(--ink-2); background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ghost-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+
+  .screen {
+    width: 100%; aspect-ratio: 16 / 8; border-radius: 10px; background: #000;
+    border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .screen.collapsed { display: none; }
+  .screen img { width: 100%; height: 100%; object-fit: contain; display: none; }
+  .screen img.on { display: block; }
+  .screen-placeholder { color: var(--muted); font-size: 13px; text-align: center; padding: 0 20px; line-height: 1.7; }
+  .screen-badge {
+    position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 700; color: #fff;
+    background: rgba(242,73,87,.92); padding: 4px 10px; border-radius: 5px; display: none;
+    align-items: center; gap: 5px;
+  }
+  .screen-badge.past { background: rgba(154,161,171,.92); }
+  .screen-badge.on { display: flex; }
+  .screen-badge .live-dot { background: #fff; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+
+  .history-panel {
+    margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px; max-height: 280px; overflow-y: auto;
+  }
+  .history-panel.hidden { display: none; }
+  .history-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; cursor: pointer;
+  }
+  .history-item:hover { background: var(--surface-2); }
+  .history-item .h-verdict-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .h-ok { background: var(--success); }
+  .h-blocked { background: var(--warning); }
+  .h-violation { background: var(--danger); }
+  .history-item .h-name { font-size: 12.5px; font-weight: 600; flex: 1; min-width: 0; }
+  .history-item .h-meta { font-size: 11px; color: var(--muted); }
+  .history-empty { font-size: 12px; color: var(--muted); padding: 10px; }
+
+  .layout { display: grid; grid-template-columns: 1fr 0.85fr; gap: 20px; align-items: start; }
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 
   .section-label {
@@ -81,9 +149,9 @@
   .row-top { display: flex; align-items: center; gap: 12px; }
   .avatar {
     width: 38px; height: 38px; border-radius: 10px; flex: none;
-    color: #071012; display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
   }
+  .avatar svg { width: 19px; height: 19px; }
   .row-id { flex: 1; min-width: 0; }
   .row-name { font-weight: 700; font-size: 14px; }
   .row-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
@@ -117,29 +185,9 @@
     padding: 16px 18px; min-height: 320px; position: sticky; top: 20px;
   }
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .panel-title { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-2); }
   .panel-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
 
   .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
-
-  .screen {
-    width: 100%; aspect-ratio: 3 / 2; border-radius: 8px; background: #000;
-    border: 1px solid var(--border);
-    margin-bottom: 14px; position: relative; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .screen img { width: 100%; height: 100%; object-fit: contain; display: none; }
-  .screen img.on { display: block; }
-  .screen-placeholder { color: var(--muted); font-size: 12px; text-align: center; padding: 0 20px; line-height: 1.6; }
-  .screen-badge {
-    position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 700; color: #fff;
-    background: rgba(242,73,87,.92); padding: 3px 8px; border-radius: 4px; display: none;
-    align-items: center; gap: 4px;
-  }
-  .screen-badge.on { display: flex; }
-  .screen-badge .live-dot { background: #fff; }
-  .live-dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
 
   .steps { position: relative; }
   .step { display: flex; gap: 10px; padding-bottom: 14px; position: relative; }
@@ -207,6 +255,31 @@
     </div>
   </div>
 
+  <div class="screen-section">
+    <div class="screen-head">
+      <div class="screen-title-group">
+        <div class="panel-title">실행 화면</div>
+        <div class="screen-sub">Agent가 실제로 보고 있는 화면을 그대로 보여줍니다</div>
+      </div>
+      <div class="screen-controls">
+        <label class="toggle">
+          <input type="checkbox" id="screenToggle" checked>
+          <span class="toggle-track"></span>
+          화면 표시
+        </label>
+        <button class="ghost-btn" id="historyBtn">지난 기록 (<span id="historyCount">0</span>)</button>
+      </div>
+    </div>
+    <div class="screen" id="screen">
+      <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>실시간</div>
+      <img id="screenImg" alt="agent live view">
+      <div class="screen-placeholder" id="screenPlaceholder">구독 목록에서 "AI Agent로 해지하기" 또는<br>"공격 시뮬레이션으로 테스트"를 누르면<br>여기에 실제 다크패턴 사이트 화면이 실시간으로 나타납니다</div>
+    </div>
+    <div class="history-panel hidden" id="historyPanel">
+      <div class="history-empty">아직 실행 기록이 없어요.</div>
+    </div>
+  </div>
+
   <div class="layout">
     <div>
       <div class="section-label" id="sectionTitle">내 구독</div>
@@ -217,22 +290,24 @@
 
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">실행 화면 + 파이프라인</div>
+        <div class="panel-title">실행 파이프라인</div>
       </div>
-      <div class="panel-sub">Agent가 실제로 보고 있는 화면과 판단 단계를 그대로 보여줍니다</div>
-      <div class="screen" id="screen">
-        <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>실시간</div>
-        <img id="screenImg" alt="agent live view">
-        <div class="screen-placeholder" id="screenPlaceholder">실행을 누르면<br>여기에 실제 다크패턴 사이트 화면이<br>실시간으로 나타납니다</div>
-      </div>
+      <div class="panel-sub">정책 변환부터 사후 검증까지, 무결성 판단 단계</div>
       <div id="logPanel">
-        <div class="placeholder">왼쪽 목록에서 "AI Agent로 해지하기" 또는 "공격 시뮬레이션"을 눌러보세요.</div>
+        <div class="placeholder">왼쪽 목록에서 실행하면 여기에 단계별 로그가 표시됩니다.</div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+const ICONS = {
+  'ordernow-club': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 0 0 2 2v9"/><path d="M7 3v4M11 3v4"/><path d="M17 3c-2 0-3 2-3 5s1 4 3 4v9"/></svg>',
+  'supercart-plus': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.1" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1.1" fill="currentColor" stroke="none"/><path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L21 8H6"/></svg>',
+  'primevault': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z"/><path d="M4 7l8 4 8-4"/><path d="M12 11v10"/></svg>',
+  'cloudstudio': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 13l9 5 9-5"/></svg>',
+};
+
 let uid = localStorage.getItem('dp_uid');
 if (!uid) {
   uid = 'demo-' + Date.now();
@@ -245,7 +320,95 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.setItem('dp_uid', uid);
   document.getElementById('sessionLabel').textContent = '세션 · ' + uid.slice(-10);
   loadSubscriptions();
+  loadHistory();
 });
+
+// --- screen show/hide toggle ---
+const screenEl = document.getElementById('screen');
+const screenToggle = document.getElementById('screenToggle');
+let showScreen = localStorage.getItem('dp_showScreen') !== '0';
+screenToggle.checked = showScreen;
+if (!showScreen) screenEl.classList.add('collapsed');
+screenToggle.addEventListener('change', () => {
+  showScreen = screenToggle.checked;
+  localStorage.setItem('dp_showScreen', showScreen ? '1' : '0');
+  screenEl.classList.toggle('collapsed', !showScreen);
+});
+
+// --- history panel ---
+const historyPanel = document.getElementById('historyPanel');
+const historyBtn = document.getElementById('historyBtn');
+let historyOpen = false;
+historyBtn.addEventListener('click', () => {
+  historyOpen = !historyOpen;
+  historyBtn.classList.toggle('active', historyOpen);
+  historyPanel.classList.toggle('hidden', !historyOpen);
+  if (historyOpen) loadHistory();
+});
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return '방금 전';
+  if (min < 60) return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}시간 전`;
+  return `${Math.floor(hr / 24)}일 전`;
+}
+
+async function loadHistory() {
+  const res = await fetch('/api/history?uid=' + encodeURIComponent(uid));
+  const data = await res.json();
+  document.getElementById('historyCount').textContent = data.history.length;
+  if (!historyOpen) return;
+  if (!data.history.length) {
+    historyPanel.innerHTML = '<div class="history-empty">아직 실행 기록이 없어요. 실행 기록은 7일간 보관돼요.</div>';
+    return;
+  }
+  historyPanel.innerHTML = '';
+  for (const h of data.history) {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const dotClass = h.verdict.blocked ? 'h-blocked' : h.verdict.integrityViolation ? 'h-violation' : 'h-ok';
+    const label = h.verdict.blocked ? '사전 차단' : h.verdict.integrityViolation ? '위반 탐지' : '정상 완료';
+    item.innerHTML = `
+      <span class="h-verdict-dot ${dotClass}"></span>
+      <span class="h-name">${escapeHtml(h.serviceName)}${h.attack ? ' · 공격 시뮬레이션' : ''}</span>
+      <span class="h-meta">${label} · ${timeAgo(h.at)}</span>
+    `;
+    item.addEventListener('click', () => loadHistoryDetail(h.id));
+    historyPanel.appendChild(item);
+  }
+}
+
+async function loadHistoryDetail(id) {
+  const res = await fetch(`/api/history/${id}?uid=` + encodeURIComponent(uid));
+  const data = await res.json();
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+  const screenImg = document.getElementById('screenImg');
+  const screenPlaceholder = document.getElementById('screenPlaceholder');
+  const screenBadge = document.getElementById('screenBadge');
+  if (data.lastFrame) {
+    screenImg.src = 'data:image/jpeg;base64,' + data.lastFrame;
+    screenImg.classList.add('on');
+    screenPlaceholder.style.display = 'none';
+  }
+  screenBadge.className = 'screen-badge on past';
+  screenBadge.innerHTML = `지난 기록 · ${timeAgo(data.at)}`;
+  renderLog(data.logs, data.verdict);
+  historyOpen = false;
+  historyBtn.classList.remove('active');
+  historyPanel.classList.add('hidden');
+  if (!showScreen) {
+    showScreen = true;
+    screenToggle.checked = true;
+    localStorage.setItem('dp_showScreen', '1');
+    screenEl.classList.remove('collapsed');
+  }
+}
 
 async function loadSubscriptions() {
   const cardsEl = document.getElementById('cards');
@@ -267,10 +430,6 @@ async function loadSubscriptions() {
     : '없음';
 }
 
-function initials(name) {
-  return name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || name[0];
-}
-
 function renderRow(s) {
   const div = document.createElement('div');
   div.className = 'row';
@@ -279,16 +438,17 @@ function renderRow(s) {
   const rightHtml = isActive
     ? `<span class="dday ${urgent ? 'urgent' : ''}">${s.daysUntilBilling === 0 ? '오늘 결제' : s.daysUntilBilling + '일 뒤'}</span>`
     : `<span class="row-cancelled-tag">해지완료</span>`;
+  const icon = ICONS[s.path] || '';
   div.innerHTML = `
     <div class="row-top">
-      <div class="avatar" style="background:${s.accent}">${initials(s.name)}</div>
+      <div class="avatar" style="background:${s.accent}1f;color:${s.accent}">${icon}</div>
       <div class="row-id">
         <div class="row-name">${s.name}</div>
         <div class="row-sub">${s.price.toLocaleString()}원 · 월간 · 이번 달 ${s.usageThisMonth}회 사용</div>
       </div>
       <div class="row-right">${rightHtml}</div>
     </div>
-    ${s.suggestionText ? `<div class="insight">💡 ${s.suggestionText}</div>` : ''}
+    ${s.suggestionText ? `<div class="insight">${s.suggestionText}</div>` : ''}
     ${s.note ? `<div class="note-line">최근 처리 기록 · ${s.note}</div>` : ''}
     <div class="actions">
       <button class="btn-primary" data-service="${s.path}" data-attack="0" ${!isActive ? 'disabled' : ''}>AI Agent로 해지하기</button>
@@ -302,7 +462,6 @@ function renderRow(s) {
 }
 
 function runAgent(service, attack, rowEl) {
-  const logPanel = document.getElementById('logPanel');
   const screenImg = document.getElementById('screenImg');
   const screenPlaceholder = document.getElementById('screenPlaceholder');
   const screenBadge = document.getElementById('screenBadge');
@@ -312,8 +471,10 @@ function runAgent(service, attack, rowEl) {
   screenImg.classList.remove('on');
   screenPlaceholder.style.display = 'block';
   screenPlaceholder.textContent = '연결 중...';
-  screenBadge.classList.add('on');
+  screenBadge.className = 'screen-badge on';
+  screenBadge.innerHTML = '<span class="live-dot"></span>실시간';
 
+  const logPanel = document.getElementById('logPanel');
   logPanel.innerHTML = '';
   const stepsEl = document.createElement('div');
   stepsEl.className = 'steps';
@@ -333,36 +494,12 @@ function runAgent(service, attack, rowEl) {
       screenImg.src = 'data:image/jpeg;base64,' + msg.data;
       screenImg.classList.add('on');
     } else if (msg.type === 'log') {
-      const step = document.createElement('div');
-      step.className = 'step';
-      const isBad = /🛑/.test(msg.step);
-      const isGood = /✅/.test(msg.step);
-      const iconClass = isBad ? 'bad' : isGood ? 'ok' : '';
-      const iconGlyph = isBad ? '✕' : isGood ? '✓' : '';
-      step.innerHTML = `
-        <div class="step-icon ${iconClass}">${iconGlyph}</div>
-        <div class="step-body">
-          <div class="step-label">${escapeHtml(msg.step.replace(/^\d+\.\s*/, '').replace(/[🛑✅]\s*/, ''))}</div>
-          ${msg.detail ? `<div class="step-detail">${escapeHtml(msg.detail)}</div>` : ''}
-        </div>`;
-      stepsEl.appendChild(step);
+      appendStep(stepsEl, msg.step, msg.detail);
       waitingEl.innerHTML = '<span class="ring"></span>다음 단계 진행 중...';
       logPanel.appendChild(waitingEl); // keep waiting indicator at bottom
     } else if (msg.type === 'verdict') {
       waitingEl.remove();
-      const verdictEl = document.createElement('div');
-      const v = msg.verdict;
-      if (v.blocked) {
-        verdictEl.className = 'verdict verdict-blocked';
-        verdictEl.innerHTML = `<div class="verdict-title">실행 전 자동 차단됨</div>${escapeHtml(v.reason)}`;
-      } else if (v.integrityViolation) {
-        verdictEl.className = 'verdict verdict-violation';
-        verdictEl.innerHTML = `<div class="verdict-title">무결성 위반 탐지됨</div>${escapeHtml(v.reason)}`;
-      } else {
-        verdictEl.className = 'verdict verdict-ok';
-        verdictEl.innerHTML = `<div class="verdict-title">정상 처리 완료</div>무결성 검증 통과 · ${v.durationMs}ms`;
-      }
-      logPanel.appendChild(verdictEl);
+      logPanel.appendChild(verdictNode(msg.verdict));
     } else if (msg.type === 'error') {
       waitingEl.remove();
       const errEl = document.createElement('div');
@@ -373,6 +510,7 @@ function runAgent(service, attack, rowEl) {
       screenBadge.classList.remove('on');
       es.close();
       loadSubscriptions();
+      loadHistory();
     }
   };
 
@@ -383,11 +521,53 @@ function runAgent(service, attack, rowEl) {
   };
 }
 
+function appendStep(container, stepText, detail) {
+  const step = document.createElement('div');
+  step.className = 'step';
+  const isBad = /🛑/.test(stepText);
+  const isGood = /✅/.test(stepText);
+  const iconClass = isBad ? 'bad' : isGood ? 'ok' : '';
+  const iconGlyph = isBad ? '✕' : isGood ? '✓' : '';
+  step.innerHTML = `
+    <div class="step-icon ${iconClass}">${iconGlyph}</div>
+    <div class="step-body">
+      <div class="step-label">${escapeHtml(stepText.replace(/^\d+\.\s*/, '').replace(/[🛑✅]\s*/, ''))}</div>
+      ${detail ? `<div class="step-detail">${escapeHtml(detail)}</div>` : ''}
+    </div>`;
+  container.appendChild(step);
+}
+
+function renderLog(logs, verdict) {
+  const logPanel = document.getElementById('logPanel');
+  logPanel.innerHTML = '';
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'steps';
+  logPanel.appendChild(stepsEl);
+  for (const entry of logs) appendStep(stepsEl, entry.step, entry.detail);
+  logPanel.appendChild(verdictNode(verdict));
+}
+
+function verdictNode(v) {
+  const verdictEl = document.createElement('div');
+  if (v.blocked) {
+    verdictEl.className = 'verdict verdict-blocked';
+    verdictEl.innerHTML = `<div class="verdict-title">실행 전 자동 차단됨</div>${escapeHtml(v.reason)}`;
+  } else if (v.integrityViolation) {
+    verdictEl.className = 'verdict verdict-violation';
+    verdictEl.innerHTML = `<div class="verdict-title">무결성 위반 탐지됨</div>${escapeHtml(v.reason)}`;
+  } else {
+    verdictEl.className = 'verdict verdict-ok';
+    verdictEl.innerHTML = `<div class="verdict-title">정상 처리 완료</div>무결성 검증 통과 · ${v.durationMs}ms`;
+  }
+  return verdictEl;
+}
+
 function escapeHtml(str) {
   return String(str).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
 loadSubscriptions();
+loadHistory();
 </script>
 </body>
 </html>
