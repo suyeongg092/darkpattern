@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 
 const app = express();
@@ -16,6 +17,45 @@ const SERVICES = [
   { path: "primevault", name: "PrimeVault", price: 8900, usageThisMonth: 1, accent: "#7048e8", daysUntilBilling: 1 },
   { path: "cloudstudio", name: "CloudStudio", price: 24000, usageThisMonth: 15, accent: "#f76707", daysUntilBilling: 20 },
 ];
+
+// Past-run history: in-memory only (lost on server restart — acceptable for
+// a demo/prototype), capped per uid and auto-expired after 7 days so it
+// can't grow without bound. Stores only the *last* screencast frame per run,
+// not the full stream, to keep memory bounded.
+const HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const HISTORY_MAX_PER_UID = 20;
+const history = new Map(); // uid -> records, newest first
+
+function pruneHistory(uid) {
+  const now = Date.now();
+  const kept = (history.get(uid) || []).filter((r) => now - r.at < HISTORY_TTL_MS).slice(0, HISTORY_MAX_PER_UID);
+  history.set(uid, kept);
+  return kept;
+}
+
+function addHistory(uid, record) {
+  const kept = pruneHistory(uid);
+  kept.unshift(record);
+  history.set(uid, kept.slice(0, HISTORY_MAX_PER_UID));
+}
+
+app.get("/api/history", (req, res) => {
+  const uid = req.query.uid || "demo";
+  const list = pruneHistory(uid).map(({ lastFrame, logs, ...meta }) => ({
+    ...meta,
+    expiresAt: meta.at + HISTORY_TTL_MS,
+  }));
+  res.json({ history: list });
+});
+
+app.get("/api/history/:id", (req, res) => {
+  const uid = req.query.uid || "demo";
+  const record = pruneHistory(uid).find((r) => r.id === req.params.id);
+  if (!record) {
+    return res.status(404).json({ error: "기록을 찾을 수 없습니다 (7일이 지나 삭제되었을 수 있어요)" });
+  }
+  res.json(record);
+});
 
 app.get("/api/subscriptions", async (req, res) => {
   const uid = req.query.uid || "demo";
@@ -91,6 +131,9 @@ app.get("/api/run-stream", (req, res) => {
     env: { ...process.env, STREAM_FRAMES: "1", SLOW_DEMO: "1" },
   });
   let buffer = "";
+  let lastFrame = null;
+  const collectedLogs = [];
+  let finalVerdict = null;
 
   child.stdout.on("data", (chunk) => {
     buffer += chunk.toString();
@@ -100,12 +143,14 @@ app.get("/api/run-stream", (req, res) => {
     for (const line of lines) {
       const frameMatch = line.match(/^FRAME:(.*)$/);
       if (frameMatch) {
+        lastFrame = frameMatch[1];
         send({ type: "frame", data: frameMatch[1] });
         continue;
       }
       const resultMatch = line.match(/^RESULT_JSON:(.*)$/);
       if (resultMatch) {
         const { verdict } = JSON.parse(resultMatch[1]);
+        finalVerdict = verdict;
         send({ type: "verdict", verdict });
         continue;
       }
@@ -115,6 +160,7 @@ app.get("/api/run-stream", (req, res) => {
         const sepIndex = rest.indexOf(" — ");
         const step = sepIndex === -1 ? rest : rest.slice(0, sepIndex);
         const detail = sepIndex === -1 ? null : rest.slice(sepIndex + 3);
+        collectedLogs.push({ step, detail });
         send({ type: "log", step, detail });
       }
     }
@@ -122,6 +168,19 @@ app.get("/api/run-stream", (req, res) => {
 
   child.on("close", (code) => {
     if (code !== 0) send({ type: "error", message: "agent 프로세스가 비정상 종료됨" });
+    if (finalVerdict) {
+      const serviceMeta = SERVICES.find((s) => s.path === service);
+      addHistory(uid || "demo", {
+        id: crypto.randomUUID(),
+        at: Date.now(),
+        service,
+        serviceName: serviceMeta ? serviceMeta.name : service,
+        attack: attack === "1" || attack === "true",
+        verdict: finalVerdict,
+        logs: collectedLogs,
+        lastFrame,
+      });
+    }
     send({ type: "done" });
     res.end();
   });
