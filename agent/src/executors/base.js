@@ -46,6 +46,28 @@ async function injectCursor(page) {
   });
 }
 
+// Scrolls the page toward an element in small incremental steps instead of
+// Playwright's instant scrollIntoView, so the live screencast shows a
+// readable glide instead of an abrupt jump cut.
+async function smoothScrollTo(page, el) {
+  const targetY = await el
+    .evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      return window.scrollY + rect.top - window.innerHeight / 2 + rect.height / 2;
+    })
+    .catch(() => null);
+  if (targetY === null) return;
+  const startY = await page.evaluate(() => window.scrollY);
+  const distance = targetY - startY;
+  if (Math.abs(distance) < 4) return;
+  const steps = 14;
+  for (let i = 1; i <= steps; i++) {
+    const y = startY + (distance * i) / steps;
+    await page.evaluate((y) => window.scrollTo(0, y), y);
+    await page.waitForTimeout(25);
+  }
+}
+
 // Glides the (visible, in SLOW mode) cursor to an element and highlights it
 // before the caller performs the actual click/check/fill, so a viewer can
 // see what the agent is about to do, not just the result.
@@ -53,6 +75,7 @@ async function pointerTo(page, selector) {
   if (!SLOW) return;
   try {
     const el = page.locator(selector).first();
+    await smoothScrollTo(page, el);
     const box = await el.boundingBox({ timeout: 3000 });
     if (!box) return;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 20 });
