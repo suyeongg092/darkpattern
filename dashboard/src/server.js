@@ -112,12 +112,13 @@ app.post("/api/run", (req, res) => {
 // each stdout line is parsed as it arrives and pushed as its own SSE event,
 // so the frontend can light up pipeline steps as they actually happen.
 app.get("/api/run-stream", (req, res) => {
-  const { service, uid, attack } = req.query;
+  const { service, uid, attack, device } = req.query;
   if (!SERVICES.some((s) => s.path === service)) {
     return res.status(400).json({ error: `unknown service: ${service}` });
   }
   const args = [AGENT_ENTRY, service, uid || "demo", "--headless"];
   if (attack === "1" || attack === "true") args.push("--attack");
+  const deviceMode = device === "mobile" ? "mobile" : "pc";
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -128,7 +129,7 @@ app.get("/api/run-stream", (req, res) => {
 
   const child = spawn("node", args, {
     cwd: AGENT_DIR,
-    env: { ...process.env, STREAM_FRAMES: "1", SLOW_DEMO: "1" },
+    env: { ...process.env, STREAM_FRAMES: "1", SLOW_DEMO: "1", DEVICE: deviceMode },
   });
   let buffer = "";
   let lastFrame = null;
@@ -176,6 +177,7 @@ app.get("/api/run-stream", (req, res) => {
         service,
         serviceName: serviceMeta ? serviceMeta.name : service,
         attack: attack === "1" || attack === "true",
+        device: deviceMode,
         verdict: finalVerdict,
         logs: collectedLogs,
         lastFrame,
