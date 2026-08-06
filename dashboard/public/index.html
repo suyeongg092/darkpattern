@@ -98,6 +98,15 @@
     border: 1px solid var(--border);
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
+    transition: max-width .2s, aspect-ratio .2s;
+  }
+  .screen.mobile {
+    max-width: 300px; aspect-ratio: 390 / 844; margin: 0 auto;
+    border-radius: 30px; border: 6px solid #1c1f24; box-shadow: 0 0 0 1px var(--border);
+  }
+  .screen.mobile::before {
+    content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 70px; height: 16px; border-radius: 999px; background: #1c1f24; z-index: 2;
   }
   .screen.collapsed { display: none; }
   .screen img { width: 100%; height: 100%; object-fit: contain; display: none; }
@@ -262,6 +271,8 @@
         <div class="screen-sub">Agent가 실제로 보고 있는 화면을 그대로 보여줍니다</div>
       </div>
       <div class="screen-controls">
+        <button class="ghost-btn" id="deviceMobileBtn" data-device="mobile">모바일</button>
+        <button class="ghost-btn" id="devicePcBtn" data-device="pc">PC</button>
         <label class="toggle">
           <input type="checkbox" id="screenToggle" checked>
           <span class="toggle-track"></span>
@@ -335,6 +346,27 @@ screenToggle.addEventListener('change', () => {
   screenEl.classList.toggle('collapsed', !showScreen);
 });
 
+// --- device (PC / mobile viewport) switch ---
+const deviceMobileBtn = document.getElementById('deviceMobileBtn');
+const devicePcBtn = document.getElementById('devicePcBtn');
+let device = localStorage.getItem('dp_device') || 'mobile';
+function applyDevice() {
+  screenEl.classList.toggle('mobile', device === 'mobile');
+  deviceMobileBtn.classList.toggle('active', device === 'mobile');
+  devicePcBtn.classList.toggle('active', device === 'pc');
+}
+applyDevice();
+deviceMobileBtn.addEventListener('click', () => {
+  device = 'mobile';
+  localStorage.setItem('dp_device', device);
+  applyDevice();
+});
+devicePcBtn.addEventListener('click', () => {
+  device = 'pc';
+  localStorage.setItem('dp_device', device);
+  applyDevice();
+});
+
 // --- history panel ---
 const historyPanel = document.getElementById('historyPanel');
 const historyBtn = document.getElementById('historyBtn');
@@ -391,6 +423,11 @@ async function loadHistoryDetail(id) {
   const screenImg = document.getElementById('screenImg');
   const screenPlaceholder = document.getElementById('screenPlaceholder');
   const screenBadge = document.getElementById('screenBadge');
+  if (data.device) {
+    device = data.device;
+    localStorage.setItem('dp_device', device);
+    applyDevice();
+  }
   if (data.lastFrame) {
     screenImg.src = 'data:image/jpeg;base64,' + data.lastFrame;
     screenImg.classList.add('on');
@@ -484,7 +521,7 @@ function runAgent(service, attack, rowEl) {
   waitingEl.innerHTML = '<span class="ring"></span>Agent 연결 중...';
   logPanel.appendChild(waitingEl);
 
-  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device });
   const es = new EventSource('/api/run-stream?' + qs.toString());
 
   es.onmessage = (evt) => {
