@@ -46,8 +46,8 @@ async function startScreencast(page) {
   });
   await cdp.send("Page.startScreencast", {
     format: "jpeg",
-    quality: 60,
-    maxWidth: 720,
+    quality: 85,
+    maxWidth: 960,
     maxHeight: 480,
     everyNthFrame: 1,
   });
@@ -99,7 +99,7 @@ async function main() {
     if (headless) launchOpts.args = ["--headless=new"];
   }
   const browser = await chromium.launch(launchOpts);
-  const page = await browser.newPage({ viewport: { width: 720, height: 480 } });
+  const page = await browser.newPage({ viewport: { width: 960, height: 480 } });
   await injectCursor(page);
   const cdp = await startScreencast(page);
 
