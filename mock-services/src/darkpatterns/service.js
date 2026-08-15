@@ -90,6 +90,23 @@ function defineService({
   // the flow-level 단계 수 comparison can show a real difference.
   const skipsInClean = (pagePath) => Boolean(pages[pagePath] && pages[pagePath].skipInClean);
 
+  // Back target = the previous step of whichever flow this page belongs to, so
+  // the arrow retraces the path the user actually took. Pages outside a flow
+  // (and the first step of one) fall back to the service home; the service home
+  // itself goes up to the service list. Skipped-in-clean steps are excluded, or
+  // the arrow would point at a page that only redirects forward again.
+  function backFor(pagePath, c) {
+    if (pagePath === "/") return { href: "/", label: "서비스 목록" };
+    const home = { href: `/${servicePath}?${c.q}`, label: "뒤로" };
+    for (const flow of Object.values(flows)) {
+      const live = c.variant === "clean" ? flow.steps.filter((p) => !skipsInClean(p)) : flow.steps;
+      const i = live.indexOf(pagePath);
+      if (i > 0) return { href: `/${servicePath}${live[i - 1]}?${c.q}`, label: "뒤로" };
+      if (i === 0) return home;
+    }
+    return home;
+  }
+
   for (const [pagePath, def] of Object.entries(pages)) {
     router.get(pagePath, (req, res) => {
       const c = buildCtx(req);
@@ -116,6 +133,7 @@ function defineService({
           uid: c.uid,
           attack: c.attack,
           variant: c.variant,
+          back: backFor(pagePath, c),
           body,
         })
       );

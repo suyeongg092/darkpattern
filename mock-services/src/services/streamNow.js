@@ -34,6 +34,10 @@ const SERVICE = "streamnow";
 const ACCENT = "#7b3fe4";
 const MONTHLY = 13900;
 
+const MENU = ["프로필 관리", "시청 기록", "결제 수단 관리", "알림 설정", "이용권 정보"];
+const menuRow = (label, c) =>
+  `<label><a href="/${SERVICE}?${c.q}" style="color:#1a1a1a;text-decoration:none">${label}</a></label>`;
+
 const PLANS = {
   premium: { label: "프리미엄 (4K, 4인 동시시청)", price: 13900 },
   standard: { label: "스탠다드 (FHD, 2인 동시시청)", price: 9900 },
@@ -200,24 +204,18 @@ const service = defineService({
               note: "동일 계층의 관리 항목 중 해지만 목록에서 빠져 시각적으로 현저히 축소 표시됨",
             },
           ],
+          // 다크패턴은 "해지만 목록 밖으로 빼둔 것"이지 "메뉴가 작동하지 않는 것"이 아니다.
+          // 나머지가 죽어 있으면 재현이 아니라 미완성으로 읽힌다.
           dark: (c2) => `
             <div class="card">
-              <label>프로필 관리</label>
-              <label>시청 기록</label>
-              <label>결제 수단 관리</label>
-              <label>알림 설정</label>
-              <label>이용권 정보</label>
+              ${MENU.map((m) => menuRow(m, c2)).join("\n              ")}
             </div>
             <div style="text-align:center;margin-top:28px">
               <a class="btn-danger-small" href="/${SERVICE}/cancel/step1?${c2.q}" data-testid="manage-cancel">구독 해지</a>
             </div>`,
           clean: (c2) => `
             <div class="card">
-              <label>프로필 관리</label>
-              <label>시청 기록</label>
-              <label>결제 수단 관리</label>
-              <label>알림 설정</label>
-              <label>이용권 정보</label>
+              ${MENU.map((m) => menuRow(m, c2)).join("\n              ")}
               <label><a href="/${SERVICE}/cancel/step1?${c2.q}" data-testid="manage-cancel" style="color:#1a1a1a;text-decoration:none">구독 해지</a></label>
             </div>`,
         }),
@@ -445,7 +443,7 @@ const service = defineService({
     // incoherent — and would quietly hide that the user never actually cancelled.
     router.post("/cancel/pause", (req, res) => {
       const c = buildCtx(req);
-      c.setState({ status: "active", paused: true, note: "해지 대신 구독 일시중지 수락" });
+      c.setState({ status: "active", paused: true, retained: true, note: "해지 대신 구독 일시중지 수락" });
       res.redirect(`/${SERVICE}?${c.q}`);
     });
 
@@ -454,6 +452,7 @@ const service = defineService({
       c.setState({
         status: "active",
         discounted: true,
+        retained: true,
         pendingCharge: Math.round(MONTHLY / 2),
         note: "해지 대신 3개월 50% 할인 수락",
       });
@@ -489,6 +488,7 @@ const service = defineService({
         c.setState({
           status: "cancelled",
           autoRenew: false,
+          retained: false,
           pendingCharge: 0,
           note: immediate ? "정상 해지 (즉시해지)" : "정상 해지 (정기결제 해지)",
         });

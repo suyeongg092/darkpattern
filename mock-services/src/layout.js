@@ -1,5 +1,12 @@
-function page({ title, accent = "#333", uid, attack, variant = "dark", body }) {
+// `back` is { href, label } — one step up in the current flow, not a link to the
+// service list. Without it every page is a dead end you can only leave by
+// pressing the browser's back button, which is not how a real app behaves and
+// makes the multi-step cancel flows painful to click through in a demo.
+function page({ title, accent = "#333", uid, attack, variant = "dark", back, body }) {
   const clean = variant === "clean";
+  const backLink = back
+    ? `<a href="${back.href}">&larr; ${back.label}</a>`
+    : `<a href="/">&larr; 서비스 목록</a>`;
   return `<!doctype html>
 <html lang="ko" data-variant="${clean ? "clean" : "dark"}">
 <head>
@@ -56,7 +63,7 @@ function page({ title, accent = "#333", uid, attack, variant = "dark", body }) {
 </head>
 <body>
   <div class="topbar">
-    <a href="/">&larr; 목업 서비스 목록</a>
+    ${backLink}
     <span>uid: ${uid}${attack ? '<span class="badge attack-badge">ATTACK MODE</span>' : '<span class="badge">normal</span>'}${
       clean ? '<span class="badge clean-badge">시정 후</span>' : '<span class="badge">시정 전</span>'
     }</span>

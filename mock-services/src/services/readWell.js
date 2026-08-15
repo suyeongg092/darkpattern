@@ -91,10 +91,10 @@ const service = defineService({
           patterns: [],
           dark: (c2) => `
             <div class="card">
-              <label><a href="#" style="color:#1a1a1a;text-decoration:none">프로필 관리</a></label>
-              <label><a href="#" style="color:#1a1a1a;text-decoration:none">읽은 책 기록</a></label>
-              <label><a href="#" style="color:#1a1a1a;text-decoration:none">결제 수단 관리</a></label>
-              <label><a href="#" style="color:#1a1a1a;text-decoration:none">알림 설정</a></label>
+              <label><a href="/readwell?${c2.q}" style="color:#1a1a1a;text-decoration:none">프로필 관리</a></label>
+              <label><a href="/readwell?${c2.q}" style="color:#1a1a1a;text-decoration:none">읽은 책 기록</a></label>
+              <label><a href="/readwell?${c2.q}" style="color:#1a1a1a;text-decoration:none">결제 수단 관리</a></label>
+              <label><a href="/readwell?${c2.q}" style="color:#1a1a1a;text-decoration:none">알림 설정</a></label>
               <label><a href="/${SERVICE}/cancel?${c2.q}" style="color:#1a1a1a;text-decoration:none" data-testid="manage-cancel">구독 해지</a></label>
             </div>
             <p style="font-size:12px;color:#888;text-align:center">

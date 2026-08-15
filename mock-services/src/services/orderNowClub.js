@@ -18,6 +18,10 @@ const { plain, custom, requiredStep } = require("../darkpatterns/components");
 const SERVICE = "ordernow-club";
 const ACCENT = "#2ac1bc";
 
+const MENU = ["배송지 관리", "결제 수단 관리", "알림 설정", "쿠폰함", "이용 내역"];
+const menuRow = (label, c) =>
+  `<label><a href="/${SERVICE}?${c.q}" style="color:#1a1a1a;text-decoration:none">${label}</a></label>`;
+
 const service = defineService({
   path: SERVICE,
   name: "OrderNow Club",
@@ -59,24 +63,19 @@ const service = defineService({
               note: "배송지·결제수단 등 동일 계층 항목은 목록 행으로 제공되는데 해지만 목록에서 제외되어 현저히 축소 표시됨",
             },
           ],
+          // 메뉴 항목은 전부 눌리게 해둔다. 다크패턴은 "해지만 목록 밖으로 빼둔 것"이지
+          // "메뉴가 작동하지 않는 것"이 아니라서, 나머지가 죽어 있으면 재현이 아니라 그냥
+          // 미완성으로 보인다. 다크패턴과 무관한 항목은 서비스 홈으로 되돌린다.
           dark: (c) => `
             <div class="card">
-              <label>배송지 관리</label>
-              <label>결제 수단 관리</label>
-              <label>알림 설정</label>
-              <label>쿠폰함</label>
-              <label>이용 내역</label>
+              ${MENU.map((m) => menuRow(m, c)).join("\n              ")}
             </div>
             <div style="text-align:center;margin-top:24px">
               <a class="btn-danger-small" href="/${SERVICE}/cancel/hub?${c.q}" data-testid="manage-cancel">멤버십 해지</a>
             </div>`,
           clean: (c) => `
             <div class="card">
-              <label>배송지 관리</label>
-              <label>결제 수단 관리</label>
-              <label>알림 설정</label>
-              <label>쿠폰함</label>
-              <label>이용 내역</label>
+              ${MENU.map((m) => menuRow(m, c)).join("\n              ")}
               <label><a href="/${SERVICE}/cancel/hub?${c.q}" data-testid="manage-cancel" style="color:#1a1a1a;text-decoration:none">멤버십 해지</a></label>
             </div>`,
         }),
@@ -94,20 +93,20 @@ const service = defineService({
               note: "해지 요청과 무관한 쿠폰·제휴 혜택 목록으로 화면을 채워 해지 진행 수단을 스크롤 아래로 밀어냄",
             },
           ],
-          dark: () => `
+          dark: (c) => `
             <div class="card">
-              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee">
+              <a href="/ordernow-club?${c.q}" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;color:inherit;text-decoration:none">
                 <span>☕ 커피 및 배달쿠폰<br><span style="font-size:12px;color:#888">아메리카노 무료, 더하기 할인</span></span>
                 <span style="color:#aaa;font-size:13px">바로가기 &gt;</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee">
+              </a>
+              <a href="/ordernow-club?${c.q}" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;color:inherit;text-decoration:none">
                 <span>🛍️ 구독 서비스 이용<br><span style="font-size:12px;color:#888">OTT 할인, 음악 스트리밍</span></span>
                 <span style="color:#aaa;font-size:13px">바로가기 &gt;</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;padding:10px 0">
+              </a>
+              <a href="/ordernow-club?${c.q}" style="display:flex;justify-content:space-between;padding:10px 0;color:inherit;text-decoration:none">
                 <span>🥬 신선식품 등 장보기 할인<br><span style="font-size:12px;color:#888">마트, 편의점</span></span>
                 <span style="color:#aaa;font-size:13px">바로가기 &gt;</span>
-              </div>
+              </a>
             </div>
             <div class="card" style="background:${ACCENT}18;border:1px solid ${ACCENT}55">
               <p style="margin:0;font-size:13px">카드 연결하면 클럽 이용료 <b>매월 500원 할인</b></p>
@@ -138,7 +137,7 @@ const service = defineService({
               {{HIDDEN}}
               <button class="btn btn-primary" type="submit" data-testid="hub-keep">클럽 전용 혜택 유지하기</button>
             </form>
-            <button class="btn" style="display:block;width:100%;margin-top:8px;background:#fff;border:1px solid #ddd;color:#555" disabled>결제일 전 알림 받기</button>
+            <a class="btn" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;background:#fff;border:1px solid #ddd;color:#555" href="/${SERVICE}?${c.q}">결제일 전 알림 받기</a>
             <p style="text-align:center;font-size:12px;color:#999;margin-top:10px">다음 결제일이 아직 3일 남았어요.<br>혜택을 더 이용하고 결정하세요.</p>
             <div style="text-align:center;margin-top:20px">
               <a class="btn-danger-small" href="/${SERVICE}/cancel/value-reminder?${c.q}" data-testid="hub-cancel">해지하기</a>
@@ -337,7 +336,7 @@ const service = defineService({
   routes: (router, { buildCtx }) => {
     router.post("/cancel/keep", (req, res) => {
       const c = buildCtx(req);
-      c.setState({ status: "active", note: "리텐션 쿠폰/혜택 유지 수락" });
+      c.setState({ status: "active", retained: true, note: "리텐션 쿠폰/혜택 유지 수락" });
       res.redirect(`/${SERVICE}?${c.q}`);
     });
 

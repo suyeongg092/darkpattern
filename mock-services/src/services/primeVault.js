@@ -260,13 +260,13 @@ const service = defineService({
 
     router.post("/cancel/pause", (req, res) => {
       const c = buildCtx(req);
-      c.setState({ status: "active", paused: true, note: "종료 대신 3개월 일시중지 수락" });
+      c.setState({ status: "active", paused: true, retained: true, note: "종료 대신 3개월 일시중지 수락" });
       res.redirect(`/${SERVICE}?${c.q}`);
     });
 
     router.post("/cancel/discount", (req, res) => {
       const c = buildCtx(req);
-      c.setState({ status: "active", discounted: true, note: "종료 대신 3개월 50% 할인 수락" });
+      c.setState({ status: "active", discounted: true, retained: true, note: "종료 대신 3개월 50% 할인 수락" });
       res.redirect(`/${SERVICE}?${c.q}`);
     });
 

@@ -307,13 +307,18 @@ const service = defineService({
   routes: (router, { buildCtx }) => {
     router.post("/cancel/pause", (req, res) => {
       const c = buildCtx(req);
-      c.setState({ status: "active", paused: true, note: "해지 대신 구독 일시중지 수락" });
+      c.setState({ status: "active", paused: true, retained: true, note: "해지 대신 구독 일시중지 수락" });
       res.redirect(`/${SERVICE}?${c.q}`);
     });
 
     router.post("/cancel/downgrade", (req, res) => {
       const c = buildCtx(req);
-      c.setState({ status: "active", plan: "단일 앱 플랜(월 12,000원)", note: "해지 대신 단일 앱 플랜 전환 수락" });
+      c.setState({
+        status: "active",
+        plan: "단일 앱 플랜(월 12,000원)",
+        retained: true,
+        note: "해지 대신 단일 앱 플랜 전환 수락",
+      });
       res.redirect(`/${SERVICE}?${c.q}`);
     });
 

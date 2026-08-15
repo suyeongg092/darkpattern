@@ -525,10 +525,10 @@ const service = defineService({
       if (option === "full_cancel") {
         res.redirect(`/${SERVICE}/cancel/verify?${c.q}`);
       } else if (option === "pause") {
-        c.setState({ status: "active", paused: true, note: "1개월 일시정지 선택" });
+        c.setState({ status: "active", paused: true, retained: true, note: "1개월 일시정지 선택" });
         res.redirect(`/${SERVICE}?${c.q}`);
       } else if (option === "downgrade") {
-        c.setState({ status: "active", downgraded: true, note: "베이직 다운그레이드 선택" });
+        c.setState({ status: "active", downgraded: true, retained: true, note: "베이직 다운그레이드 선택" });
         res.redirect(`/${SERVICE}?${c.q}`);
       } else {
         res.redirect(`/${SERVICE}/cancel?${c.q}`);
