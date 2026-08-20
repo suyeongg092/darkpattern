@@ -29,8 +29,18 @@ function esc(s) {
 // A block is { el, patterns, dark(ctx), clean(ctx) }. `patterns` entries are
 // { pattern, note } — note explains *why* this specific instance counts, which
 // is what makes the ground truth reviewable by a human (and by the judges).
-function block({ el, patterns = [], dark, clean = () => "" }) {
-  return { el, patterns, dark, clean };
+function block({ el, patterns = [], dark, clean }) {
+  // 패턴이 없는 블록은 다크패턴이 아니라 그냥 화면 내용이다 — 헤더, 상품 정보,
+  // 주문 요약 같은 것들. 시정 후에도 당연히 그대로 나와야 한다.
+  //
+  // 기본값이 빈 문자열이던 시절에는 `clean` 을 적지 않은 중립 블록이 시정 후에
+  // 통째로 사라졌고, 그래서 StreamNow·OrderNow·CloudStudio·PrimeVault 의 홈과
+  // SuperCart 의 상품·주문 화면 등 24개 화면이 시정 후에 백지로 렌더됐다.
+  //
+  // 패턴이 있는 블록은 다르다. 만류 배너처럼 '단계를 지우는 것'이 시정인 경우가
+  // 있으므로 명시하지 않으면 삭제로 남겨 둔다 — 다만 그건 의도한 삭제여야 한다.
+  const fallback = patterns.length ? () => "" : dark;
+  return { el, patterns, dark, clean: clean || fallback };
 }
 
 function wrap(el, html) {
@@ -91,7 +101,7 @@ function choicePair({ el, patterns, keep, leave }) {
     dark: (ctx) =>
       `${link(keep, "btn btn-primary", "display:block")}
        <div style="text-align:center;margin-top:14px">
-         ${link(leave, "btn-danger-small")}
+         ${link(leave, "btn-quiet")}
        </div>`.replace(/\{\{HIDDEN\}\}/g, ctx.hidden),
     clean: (ctx) =>
       `<div class="choice-equal">
@@ -212,7 +222,7 @@ function nagOverlay({ el, patterns, title, body, stay, leave }) {
     el,
     patterns,
     dark: () =>
-      `<div class="nag">
+      `<div class="panel-raised">
          <h3 style="margin:0 0 6px">${title}</h3>
          <p style="font-size:13px;color:#888;margin:0 0 14px">${body}</p>
          ${stayControl}
@@ -228,7 +238,7 @@ function urgencyBanner({ el, patterns, text }) {
   return block({
     el,
     patterns,
-    dark: () => `<div class="urgency" data-testid="${el}">${text}</div>`,
+    dark: () => `<div class="strip" data-testid="${el}">${text}</div>`,
   });
 }
 

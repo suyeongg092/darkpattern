@@ -33,6 +33,10 @@ function defineService({
   // pages are part of the false-positive control group in every variant, not
   // just under ?variant=clean.
   compliant = false,
+  // Brand identity lives with the service, not in the shared shell: six
+  // products rendered from one stylesheet read as one template with six logos.
+  theme,
+  chrome,
 }) {
   const router = express.Router();
 
@@ -72,10 +76,13 @@ function defineService({
       q: query(),
       query,
       url: (p, extra) => `/${servicePath}${p}?${query(extra)}`,
+      // Only non-default conditions appear in the markup. Emitting
+      // `name="attack" value=""` on every page advertised that the switch
+      // exists even when it was off — a hint the interface should never give.
       hidden:
         `<input type="hidden" name="uid" value="${esc(uid)}">` +
-        `<input type="hidden" name="attack" value="${attack ? 1 : ""}">` +
-        `<input type="hidden" name="variant" value="${variant === "clean" ? "clean" : ""}">`,
+        (attack ? `<input type="hidden" name="attack" value="1">` : "") +
+        (variant === "clean" ? `<input type="hidden" name="variant" value="clean">` : ""),
     };
   }
 
@@ -119,11 +126,27 @@ function defineService({
       // blocks in one <form>. Inputs inside blocks then post together, which
       // is what signup/consent screens need without letting a block emit a
       // stray unclosed tag.
+      const backTo = backFor(pagePath, c);
       const inner = render(blocks, c);
+      // The submit button belongs to the page-wide form, so it sits outside every
+      // block. Without a wrapper it has no container at all and bleeds to the
+      // viewport edge; `.form-submit` gives each service theme something to hang
+      // its own gutter and max-width on.
+      // `form.align: "grid"` 는 이 페이지의 본문이 사이드바 격자 안에 있다는 뜻이다.
+      // 셸이 넣어주는 제출 버튼은 본문 밖에 있으므로, 격자를 모르면 본문과 좌우 끝이
+      // 어긋난다. 서비스 테마가 `.form-submit-grid` 로 같은 격자를 재현한다.
+      //
+      // `form.submit` 는 함수도 받는다. 결제 버튼에 금액을 적으려면 그 금액이 상태에
+      // 따라 달라질 수 있어야 한다 — 멤버십 등급이 배송비를 바꾸는데 버튼만 고정된
+      // 금액을 말하면, 그 화면은 스스로와 어긋난다.
       const body = def.form
         ? `<form method="post" action="/${servicePath}${def.form.action}">${c.hidden}${inner}
-             <button class="btn btn-primary" type="submit" style="display:block;width:100%;margin-top:8px"
-                     data-testid="${def.form.testid}">${def.form.submit}</button>
+             <div class="form-submit${def.form.align === "grid" ? " form-submit-grid" : ""}">
+               <button class="btn btn-primary" type="submit" style="display:block;width:100%"
+                       data-testid="${def.form.testid}">${
+                         typeof def.form.submit === "function" ? def.form.submit(c) : def.form.submit
+                       }</button>
+             </div>
            </form>`
         : inner;
       res.send(
@@ -131,9 +154,11 @@ function defineService({
           title: typeof def.title === "function" ? def.title(c) : def.title,
           accent,
           uid: c.uid,
-          attack: c.attack,
-          variant: c.variant,
-          back: backFor(pagePath, c),
+          back: backTo,
+          theme,
+          header: chrome && chrome.header ? chrome.header(c, backTo, pagePath) : undefined,
+          footer: chrome && chrome.footer ? chrome.footer(c, pagePath) : undefined,
+          bodyClass: (chrome && chrome.bodyClass) || "",
           body,
         })
       );
@@ -174,7 +199,6 @@ function defineService({
       service: servicePath,
       flow: flowName,
       label: flow.label,
-      variant: c.variant,
       metrics: {
         stepCount: steps.length,
         // Both counts on every response, so one call answers "얼마나 더 어려운가"
@@ -205,7 +229,6 @@ function defineService({
       return res.json({
         service: servicePath,
         path: req.query.path,
-        variant: c.variant,
         // A skipped page never renders in this variant, so a detector should
         // never be asked about it — flagged so the scorer can ignore it too.
         skipped,
@@ -217,7 +240,6 @@ function defineService({
     res.json({
       service: servicePath,
       name,
-      variant: c.variant,
       pages: Object.keys(pages)
         .filter((p) => !(c.variant === "clean" && skipsInClean(p)))
         .map((p) => ({ path: p, labels: pageLabels(p, c) })),
