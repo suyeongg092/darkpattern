@@ -111,6 +111,49 @@ StreamNow:
 `cancel-immediate-button`이 dark에서 없는 것 자체가 다크패턴(공정위 붙임2 3.(2))이므로,
 Agent는 `cancel-confirm-button`을 기준으로 동작해야 한다.
 
+SuperCart Plus — 상품 지면 추가분:
+
+| testid | 위치 | 동작 |
+| --- | --- | --- |
+| `home-deal` | `/` | 오늘의 특가 배너 → `/item/b1` |
+| `bait-buy` | `/item/b1` | 시정 전에는 '구매하기'가 6배 비싼 `/item/b2` 로 연결 |
+
+`/item/b1`(미끼)·`/item/b2`(대체품)·`/item/s1`·`/item/s2`(광고 상품)가 상세 페이지로 추가됐다.
+b1 만 라벨을 갖고 나머지 셋은 라벨 0이다 — 위장 광고의 위법성은 '광고임을 숨긴 노출'에
+있지 상품 자체에 있지 않으므로, 상세까지 기울이면 라벨이 어디에 붙는지 흐려진다.
+
+ReadWell (대조군):
+
+| testid | 위치 | 조건 | 동작 |
+| --- | --- | --- | --- |
+| `home-manage` | `/` | active·scheduled | 구독 관리로 이동 |
+| `home-resubscribe` | `/` | cancelled | 재구독으로 이동 |
+| `offer-annual` / `offer-keep` | `/` | 월 결제 | 연간 전환 / 제안 닫기 — **둘 다 실제로 상태를 바꾼다** |
+| `offer-monthly` | `/` | 연 결제 | 월 결제로 복귀 |
+| `manage-cancel` | `/manage` | active | 해지 진입 |
+| `manage-resume` | `/manage` | scheduled | 해지 예약 취소 |
+| `manage-resubscribe` | `/manage` | cancelled | 재구독으로 이동 |
+| `cancel-period-end` / `cancel-immediate` | `/cancel` | active | 해지 방식 **선택** (radio, 기본 선택 없음) |
+| `cancel-submit` | `/cancel` | active | 선택한 방식으로 **해지 실행** |
+| `cancel-back` | `/cancel` | 전부 | 돌아가기 |
+| `resubscribe-tos` / `-marketing` / `-submit` | `/resubscribe` | cancelled | 필수·선택 동의, 제출 |
+
+ReadWell의 구독 상태는 셋이다. `active` → `scheduled`(정기결제 해지: `PERIOD_END`까지
+그대로 이용, 갱신만 중단) → `cancelled`(즉시 해지: 오늘 종료, 잔여분 환불). 정기결제
+해지를 `cancelled` 하나로 묶으면 "9월 12일까지 이용 후 종료"라고 안내해 놓고 그 자리에서
+서재를 잠그는 화면이 나오고, **그 모순을 잡아낸 탐지기가 오탐으로 채점된다.** 대조군에
+고지와 실제가 어긋나는 화면이 있어서는 안 된다.
+
+해지는 두 번의 의도적 조작을 요구한다: 방식 radio 를 고르고(`cancel-period-end` 또는
+`cancel-immediate`) `cancel-submit` 을 누른다. **단계가 늘어난 것이 아니라 한 화면 안에서
+오클릭을 막는 것**이다 — 붙임2 1.(1)이 삭제를 요구한 것은 만류 화면(혜택 상실 강조·설문·
+대안 제안)이지 확인 자체가 아니지만, 확인을 별도 페이지로 만들면 대조군이 재확인 단계를
+가진 것처럼 보이므로 같은 화면에 둔다. 서버도 `mode` 가 없거나 알 수 없는 값이면 해지를
+성립시키지 않고 `/cancel` 로 돌려보낸다. Agent 는 radio 를 먼저 클릭해야 한다.
+
+상태에 따라 사라지는 testid가 있는 것은 의도된 것이다. 이미 해지한 계정에 남아 있는
+해지 버튼은 유령 어포던스이고, 탐지기 입장에서는 강제 오탐이 된다.
+
 기존 4개 사이트에도 `data-testid`가 모두 들어가 있다. 다만 executor는 아직 텍스트 셀렉터를
 쓰고 있고 그 문구는 계속 유지되므로, 옮기는 시점은 팀원1이 정하면 된다.
 `node scripts/check-contract.js`가 문구·필드·첫 `<form>` action이 안 깨졌는지 자동 확인한다
