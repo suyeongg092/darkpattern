@@ -1,4 +1,3 @@
-<div align="center">
 
 <img src="https://raw.githubusercontent.com/suyeongg092/darkpattern/claude/financial-ai-agent-integrity-im3e3q/dashboard/public/icon01.png" width="96" />
 
@@ -9,7 +8,6 @@
 
 > 배포 URL: https://darkpattern-agent-integrity.onrender.com
 
-</div>
 
 <br/>
 
