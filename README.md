@@ -109,28 +109,32 @@ node scripts/evaluate.js 5   # 서비스 4개 × (정상/공격) × 5회 = 40회
 
 ```mermaid
 flowchart LR
-    U[사용자] --> D[dashboard<br/>실시간 시연 화면]
-    D -- "AI Agent로 해지" 클릭 --> A
+    U["사용자<br/>(브라우저)"] --> D["dashboard<br/>실시간 시연 화면"]
+    D -->|"실행 요청"| A1
 
     subgraph A[agent]
         direction TB
-        A1[① 정책 변환] --> A2[② 사전 DOM 검증]
-        A2 --> A3[③ 실행 토큰 발급·검증]
-        A3 --> A4[④ Playwright 실행]
-        A4 --> A5[⑤ 사후 상태 대조]
+        A1["① 정책 변환<br/>자연어 → JSON"] --> A2["② 사전 DOM 검증<br/>제출 전 대조"]
+        A2 --> A3["③ 실행 토큰<br/>발급 · 검증"]
+        A3 --> A4["④ Playwright<br/>브라우저 실행"]
+        A4 --> A5["⑤ 사후 상태<br/>API 재조회"]
     end
 
-    A4 -- 실제 클릭·제출 --> M
-    A5 -- 상태 재조회 --> M
+    A4 ==>|"실제 클릭 · 제출"| M1
+    A5 -.->|"상태 재조회"| M2
 
     subgraph M[mock-services]
         direction TB
-        M1[다크패턴 렌더링<br/>variant=dark/clean]
-        M2[백엔드 상태 API<br/>attack=0/1]
+        M1["다크패턴 렌더링<br/>dark / clean"]
+        M2["백엔드 상태 API<br/>attack 0 / 1"]
     end
 
-    A -- 판정 결과 --> D
+    A5 ==>|"판정 결과 전달"| D
 ```
+
+화살표는 세 종류로 구분했다. 얇은 실선은 제어 흐름(요청을 넘기기만 함), 굵은 실선은
+실제로 상태를 바꾸는 동작(브라우저 클릭·제출, 최종 판정 결과), 점선은 상태를 조회만
+하는 읽기 전용 호출이다.
 
 <br/>
 
