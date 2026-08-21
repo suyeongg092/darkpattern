@@ -1,194 +1,223 @@
-# 다크패턴 해지 Agent + 무결성 검증
+<div align="center">
 
-구독/멤버십 해지 다크패턴을 뚫고 실행해주는 Agent와, 그 Agent가 조작(ADI형 공격)당하지
-않는지 검증하는 무결성 레이어를 함께 구현하는 프로젝트.
+<img src="https://raw.githubusercontent.com/suyeongg092/darkpattern/claude/financial-ai-agent-integrity-im3e3q/dashboard/public/icon01.png" width="96" />
 
-## 구성
+# 🦛 해지하마
 
-- `mock-services/` — 다크패턴을 재현한 목업 사이트 5개 + 대조군 1개. 실제 사례에서
-  착안했으나 상표 문제를 피하기 위해 이름을 변경함. **모든 다크패턴에 정답 라벨(ground
-  truth)이 달려 있어 탐지기 평가셋으로 쓸 수 있다.**
-  - **StreamNow** — 웨이브·Hulu류 OTT 무료체험 (숨은갱신, 사전선택, 속임수 문구/질문)
-  - **OrderNow Club** — 배달의민족 배민클럽류 멤버십 (메뉴 깊숙이 숨긴 해지, 리텐션 쿠폰,
-    confirmshaming 설문)
-  - **SuperCart Plus** — 쿠팡 로켓와우류 멤버십 + 구매 플로우 (순차공개 가격책정,
-    해지 아닌 옵션이 기본 선택, 불필요한 전화인증)
-  - **PrimeVault** — Amazon Prime "Iliad Flow"(FTC 제소 건) 스타일 4단계 만류 플로우
-  - **CloudStudio** — Adobe Creative Cloud(FTC 제소 건) 스타일, 위약금 아코디언에 숨김,
-    즉시해지는 전화로만
-  - **ReadWell** — 전자책 구독. **다크패턴이 하나도 없는 대조군.** 공정위 시정 기준을
-    처음부터 지켜 만들었고 정답 라벨이 0개다. 탐지기가 여기서 무언가를 보고하면 전부 오탐
-- `agent/` — 정책 변환 / 사전(pre-execution) DOM 검증 / 일회성 실행 토큰 / 실행 후 상태
-  대조를 수행하는 무결성 검증 Agent. Playwright로 목업 서비스를 실제로 조작한다.
-- `dashboard/` — 구독 목록·AI 제안·무결성 로그를 보여주는 웹 대시보드. 버튼 클릭으로
-  `agent/`를 실행하고 결과를 실시간 타임라인으로 표시한다.
+### 다크패턴을 뚫고 해지를 실행하는 AI Agent와, 그 Agent가 조작당하지 않았는지 스스로 검증하는 무결성 레이어
 
-인터페이스 계약(경로, `data-testid`, API 스키마, 탐지기 출력 형식)은
-[mock-services/CONTRACT.md](mock-services/CONTRACT.md)에 정리되어 있다. 세 디렉터리를
-나눠서 작업할 때 서로 의존해도 되는 것은 그 문서에 적힌 것뿐이다.
 
-## 두 개의 축 — `variant`와 `attack`
+> 배포 URL: https://darkpattern-agent-integrity.onrender.com
 
-목업 사이트는 서로 독립인 두 개의 스위치를 갖는다. 섞으면 실험 설계가 무너지므로
-분리해서 기억한다.
+</div>
+
+<br/>
+
+## 🦛 프로젝트 소개
+
+구독이나 멤버십을 해지하려 할 때 마주치는 다크패턴은 숨겨진 위약금, 사전선택된 유지
+옵션, 해지 의사를 여러 번 확인시키는 화면처럼 다양한 형태로 나타난다. 이런 화면은 AI
+Agent에게도 그대로 통한다. 2026년 벤치마크 SusBench는 GPT-5, Claude, Gemini 기반 최신
+Agent도 다크패턴 회피율이 사람과 비슷한 68.3%에 그친다는 결과를 보였고, 구독 해지를
+대행한다고 광고했던 DoNotPay는 검증되지 않은 자동화를 이유로 2025년 2월 FTC 제재를
+받았다.
+
+해지하마는 판단, 실행, 검증 세 단계로 이 문제를 다룬다.
+
+- **판단**: 결제 내역과 실사용 빈도를 분석해 해지 후보를 스코어링한다.
+- **실행**: Playwright로 실제 해지 화면에 진입해 다크패턴을 통과하고 해지를 완료한다.
+- **검증**: 실행 직전에는 폼이 정책과 일치하는지 DOM을 대조하고, 실행 직후에는 백엔드
+  상태를 재조회해 화면 문구가 아니라 실제 결과를 신뢰 소스로 삼는다.
+
+화면에 뜨는 해지 완료 문구를 그대로 신뢰하지 않고 실제 상태를 다시 확인하는 것이 이
+프로젝트의 핵심이다.
+
+<br/>
+
+## 🧩 구성
+
+```
+darkpattern/
+├── mock-services/   다크패턴을 재현한 목업 사이트 5개 + 대조군 1개
+├── agent/           판단, 실행, 검증을 수행하는 무결성 검증 Agent
+└── dashboard/        구독 목록, AI 제안, 실행 로그를 보여주는 실시간 시연 화면
+```
+
+인터페이스 계약(경로, `data-testid`, API 스키마)은
+[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다. 세 디렉터리를
+나눠 작업할 때 서로 의존해도 되는 것은 이 문서에 적힌 것뿐이다.
+
+<br/>
+
+## 🎭 목업 서비스 (mock-services)
+
+실제 서비스 6개를 벤치마킹했다. 상표 문제를 피하려 이름은 바꿨지만, 다크패턴 설계는
+FTC 소송 자료와 공정거래위원회 사례집에서 그대로 가져왔다. 모든 다크패턴에 정답
+라벨이 달려 있어 탐지기 평가셋으로도 쓸 수 있다.
+
+| 서비스 | 모티프 | 주요 다크패턴 |
+| --- | --- | --- |
+| **StreamNow** | 웨이브·Hulu류 무료체험 전환 | 숨은갱신, 사전선택, 잘못된 계층구조, 속임수 질문·문구, 반복간섭 |
+| **OrderNow Club** | 배달의민족 배민클럽류 멤버십 | 취소·탈퇴 방해, 감정적 수치심, 잘못된 계층구조, 거짓 추천 |
+| **SuperCart Plus** | 쿠팡 로켓와우류 멤버십 + 구매 플로우 | 순차공개 가격책정, 유인 판매, 위장 광고, 사전선택, 가격비교방해 등. 법정 유형을 가장 폭넓게 담은 서비스 |
+| **PrimeVault** | Amazon Prime "Iliad Flow" (FTC v. Amazon) | 다단계 만류, 거짓 희소성·긴급성, 잘못된 계층구조 |
+| **CloudStudio** | Adobe Creative Cloud (FTC v. Adobe) | 숨겨진 정보(위약금), 가격비교방해, 강제 행동요구 |
+| **ReadWell** | 전자책 구독. 공정위 시정 기준 준수 사례 | 없음. 다크패턴 대조군(정답 라벨 0개) |
+
+두 개의 독립된 축으로 화면을 켜고 끈다.
 
 | 파라미터 | 축 | 재현하는 것 | 검증 대상 |
 | --- | --- | --- | --- |
-| `?variant=clean` | 다크패턴 | 공정위 "시정 후" 화면 | 탐지기의 오탐률 |
+| `?variant=clean` | 다크패턴 | 공정위 시정 후 화면 | 탐지기의 오탐률 |
 | `?attack=1` | 무결성(ADI) | 문구는 그대로, 처리 로직만 조작 | Agent의 사전·사후 검증 |
 
-**다크패턴 축**: 기본값은 시정 전(`dark`)이고, `?variant=clean`을 붙이면 공정위 시정
-사례에 맞춰 고친 같은 기능의 화면이 나온다 (해지/유지 버튼 동등 크기, '즉시해지' 병렬
-제공, 총액 첫 화면 표시, 필수·선택 항목 구분 표시 등). clean 화면에는 정답 라벨이 0개이므로,
-여기서 탐지기가 보고하는 것은 전부 오탐이다.
+`?variant=clean`은 정답 라벨이 0개인 화면이라 탐지기가 여기서 무언가를 보고하면 전부
+오탐이다. `?attack=1`은 화면 문구는 그대로 두고 백엔드 처리 로직만 조작해 Agent Data
+Injection(ADI, arXiv:2607.05120)을 재현한다. 두 축은 동시에 켤 수도 있다.
 
-**무결성 축**: `?attack=1`은 화면에 보이는 버튼 라벨/문구는 그대로 두고 실제 처리 로직만
-다르게 동작시킨다 (라벨-엔드포인트 불일치, 히든 필드 주입, 표시된 결과와 실제 상태 불일치).
-Agent Data Injection(ADI, arXiv:2607.05120)에서 설명하는 "명령이 아니라 메타데이터를 위조해
-Agent가 스스로 잘못 판단하게 만드는" 공격을 재현하기 위함이다.
-
-두 축은 동시에 켤 수 있다. `?variant=clean&attack=1`은 "규정을 지킨 화면인데 백엔드가
-조작된" 상태로, 다크패턴 탐지와 무결성 검증이 서로 다른 문제를 푼다는 것을 보여준다.
-
-## 다크패턴 평가셋
-
-각 페이지는 HTML 문자열이 아니라 **다크패턴 블록의 목록**으로 선언되고, 같은 선언에서
-화면(`render`)과 정답표(`labels`)를 함께 뽑아낸다. 화면을 고치면 정답표가 자동으로 따라오므로
-둘이 어긋날 수 없다. 렌더된 HTML에는 패턴 이름이 일절 등장하지 않고 `data-el`이라는 중립
-앵커만 남으므로, 탐지기가 정답을 커닝할 수 없다.
+현재 평가셋은 90개 라벨, 20개 유형(공정거래위원회 법정 13개 유형 전부와 개정
+전자상거래법 신설 6개 유형 전부 포함)이고, 정상 화면 대조군은 86개 화면·플로우다.
 
 ```bash
 cd mock-services
-npm run score:sample                     # 정답표에서 만든 완벽한 탐지기로 파이프라인 검증
-node scripts/score.js out.json           # 실제 탐지기 채점
-node scripts/score.js --sample --noisy   # 채점기가 오류를 실제로 잡는지 확인
-node scripts/check-contract.js           # agent executor 셀렉터가 안 깨졌는지 확인
+node scripts/score.js out.json     # 탐지기 결과 채점 (정밀도·재현율·F1)
+node scripts/check-contract.js     # agent executor 셀렉터가 안 깨졌는지 확인
 ```
 
-현재 평가셋: **90개 라벨 / 20개 유형** (공정거래위원회 13개 법정 유형 전부 + 개정
-전자상거래법이 신설 규율하는 6개 유형 전부 포함), 정상 화면 대조군 **86개 화면·플로우**
-(시정 후 화면 전부 + 준수 서비스 ReadWell). 정밀도·재현율·F1,
-유형별 재현율, 정상 화면 오탐 건수를 출력한다.
+<br/>
 
-**시정 후에는 해지 단계 자체가 줄어든다.** 만류·설문처럼 붙잡기 위해서만 존재하는 단계는
-`variant=clean`에서 렌더되지 않고 다음 단계로 리다이렉트된다 — 공정위 붙임2 1.(1)의 시정이
-그 단계를 고쳐 쓴 게 아니라 **삭제**한 것이기 때문이다. 그래서 플로우 정답표에서 이런 숫자가
-바로 나온다.
+## 🛡️ 무결성 검증 (agent)
 
-| 서비스 | 가입 | 해지 (시정 전) | 해지 (시정 후) |
-| --- | --- | --- | --- |
-| StreamNow | 1단계 | 5단계 | 3단계 |
-| OrderNow Club | 1단계 | 5단계 | 3단계 |
-| SuperCart Plus | 1단계 | 4단계 | 2단계 |
-| PrimeVault | 1단계 | 4단계 | 2단계 |
-| CloudStudio | 1단계 | 3단계 | 2단계 |
+| 공격받은 서비스 | 공격 기법 | 방어 단계 |
+| --- | --- | --- |
+| SuperCart Plus | hidden field 주입. 버튼은 해지, 실제 필드는 다운그레이드 | 사전 검증. 실행 자체가 차단됨 |
+| PrimeVault | form action 스왑. 버튼 라벨은 그대로, 실제 제출 endpoint가 다름 | 사전 검증. 실행 자체가 차단됨 |
+| OrderNow Club | 표시된 결과와 실제 상태 불일치. 성공 화면은 거짓 | 사후 검증. 상태 재조회로 탐지 |
+| CloudStudio | 공시된 금액과 실제 청구액 불일치 | 사후 검증. 상태 재조회로 탐지 |
 
-취소·탈퇴 방해는 "해지가 불가능한 것"이 아니라 "가입보다 부당하게 어려운 것"이므로,
-양쪽 다 해지는 되고 **비용이 다르다**는 것을 이 숫자로 보여준다.
+두 서비스는 사전 차단, 두 서비스는 사후 탐지로 잡힌다. 사전 검증만으로도 사후 검증만으로도
+충분하지 않고, 두 계층이 모두 필요하다는 것을 보여준다.
 
-구독 상태는 두 변형이 분리되어 있다. 시정 전에서 해지해도 시정 후 화면은 여전히 이용중으로
-보이므로, before/after 캡처를 찍을 때 앞에서 눌러본 것이 뒤에 새지 않는다.
-
-정답표는 페이지 단위와 플로우 단위 두 층위로 제공된다. 취소·탈퇴 방해(§21조의2①4)는 "가입보다
-해지가 복잡한가", 반복간섭(§21조의2①5)은 "반복되는가"로 정의되어 한 화면의 DOM만으로는
-구조적으로 판정할 수 없기 때문이다.
-
-```
-GET /:service/api/ground-truth?path=/signup   # 페이지 단위
-GET /:service/api/ground-truth?flow=cancel    # 플로우 단위 (단계 수, 만류 횟수 포함)
-GET /api/catalog                              # 유형 사전 (한글명/법조문/심각도)
+```bash
+cd agent
+node scripts/evaluate.js 5   # 서비스 4개 × (정상/공격) × 5회 = 40회 자동 실행
 ```
 
-## 실행 방법
+로컬 3회 반복 기준 공격 차단률 100%, 정상 업무 성공률 100%(오탐 0%), 평균 지연
+1.3~1.6초를 확인했다.
+
+<br/>
+
+## 🧬 System Architecture
+
+```mermaid
+flowchart LR
+    U[사용자] --> D[dashboard<br/>실시간 시연 화면]
+    D -- "AI Agent로 해지" 클릭 --> A
+
+    subgraph A[agent]
+        direction TB
+        A1[① 정책 변환] --> A2[② 사전 DOM 검증]
+        A2 --> A3[③ 실행 토큰 발급·검증]
+        A3 --> A4[④ Playwright 실행]
+        A4 --> A5[⑤ 사후 상태 대조]
+    end
+
+    A4 -- 실제 클릭·제출 --> M
+    A5 -- 상태 재조회 --> M
+
+    subgraph M[mock-services]
+        direction TB
+        M1[다크패턴 렌더링<br/>variant=dark/clean]
+        M2[백엔드 상태 API<br/>attack=0/1]
+    end
+
+    A -- 판정 결과 --> D
+```
+
+<br/>
+
+## 📚 Skills
+
+**Runtime**
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
+
+**Backend**
+
+![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+
+**Automation / 무결성 검증**
+
+![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
+![HMAC](https://img.shields.io/badge/HMAC--SHA256-4B0082?style=for-the-badge&logo=&logoColor=white)
+
+**Frontend (dashboard)**
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+
+**Infrastructure & Deployment**
+
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+
+<br/>
+
+## 🚀 실행 방법
+
+### 1. mock-services (목업 다크패턴 사이트)
 
 ```bash
 npm install
 npm run mock:start
-# http://localhost:4000  시연용 정문 — 파라미터 없는 서비스 목록
-# http://localhost:4000/lab  개발용 평가 패널 — 2x2 스위치보드, 정답표, 채점 명령어
+# http://localhost:4000      시연용 정문. 파라미터 없는 서비스 목록
+# http://localhost:4000/lab  개발용 평가 패널. 시정 전/후, 공격 모드 스위치보드
 ```
 
-입구가 두 개인 이유: `/`는 계측된 티가 안 나는 평범한 서비스 목록이라 시연·대시보드
-연결에 쓰고, `/lab`은 시정 전/후·공격 모드를 켜고 끄는 조작 패널이라 우리끼리만 쓴다.
-시연 중에는 `/lab`을 열지 않는다.
-
-각 서비스는 `GET /<service>/api/status?uid=<uid>` 로 실제 구독 상태를 조회할 수 있다.
-Agent의 "실행 후 상태 대조" 단계는 화면 표시 문구가 아니라 이 API를 신뢰 소스로 사용한다.
-
-## Agent 실행 방법
-
-`mock-services`가 `http://localhost:4000`에서 떠 있는 상태에서, 새 터미널을 열고:
+### 2. agent (mock-services가 떠 있는 상태에서, 새 터미널)
 
 ```bash
 cd agent
 node src/run.js <service> [uid] [--attack] [--headless]
-# 예: node src/run.js ordernow-club demo1          (정상 모드, 브라우저 창이 보임)
+# 예: node src/run.js ordernow-club demo1          (정상 모드)
 # 예: node src/run.js primevault demo2 --attack     (공격 모드)
 ```
 
-`service`는 `ordernow-club` / `supercart-plus` / `primevault` / `cloudstudio` 중 하나.
-StreamNow와 ReadWell은 아직 executor가 없다 — 목업 쪽 `data-testid`는 모두 준비되어 있으니
-(`mock-services/CONTRACT.md` §3 참조) 추가하려면 executor 파일만 쓰면 된다. 특히 ReadWell은
-다크패턴이 없어서 두 번 클릭으로 끝나므로, "쉬운 해지 vs 어려운 해지"의 지연시간 대비를
-지표로 보여줄 수 있다.
-`--headless`를 빼면 실제 브라우저 창이 뜨면서 Agent가 클릭하는 과정이 화면에 보인다
-(시연 영상 녹화용). 콘솔에는 정책 변환 → 사전 검증 → 토큰 발급/검증 → 실행 → 사후
-상태 대조까지 각 단계 로그와 최종 판정(JSON)이 출력된다.
+`service`는 `ordernow-club` / `supercart-plus` / `primevault` / `cloudstudio` 중 하나다.
+StreamNow와 ReadWell은 아직 executor가 없다. `data-testid`는 준비돼 있으니
+([CONTRACT.md](mock-services/CONTRACT.md) 참고) executor 파일만 추가하면 된다.
 
-**공격 유형별 방어 지점 (요약):**
-
-| 목업 서비스 | 공격 기법 | 어느 단계에서 잡히는가 |
-| --- | --- | --- |
-| SuperCart Plus | hidden field 주입 (해지 버튼인데 실제 필드는 다운그레이드) | 사전(pre-execution) DOM 검증 — 실행 자체가 차단됨 |
-| PrimeVault | form action 스왑 (버튼 라벨은 그대로, 실제 제출 대상 endpoint가 다름) | 사전(pre-execution) DOM 검증 — 실행 자체가 차단됨 |
-| OrderNow Club | 표시된 결과와 실제 상태 불일치 (성공 화면은 거짓) | 사전 검증으로는 탐지 불가 → 사후 상태 재조회로 탐지 |
-| CloudStudio | 공시된 금액과 실제 청구액 불일치 | 사전 검증으로는 탐지 불가 → 사후 상태 재조회로 탐지 |
-
-두 서비스는 사전 차단, 두 서비스는 사후 탐지로 잡힌다는 점이 핵심 — 사전 검증만으로도,
-사후 검증만으로도 충분하지 않고 두 계층이 모두 필요하다는 것을 그대로 보여준다.
-
-## 대시보드 실행 방법
-
-`mock-services`가 떠 있는 상태에서, 새 터미널을 열고:
+### 3. dashboard (mock-services가 떠 있는 상태에서, 새 터미널)
 
 ```bash
 npm run dashboard:start
-# http://localhost:5000 접속
+# http://localhost:5000
 ```
 
-구독 목록 카드마다 "AI Agent로 해지 (정상)" / "AI Agent로 해지 (공격 시뮬레이션)" 버튼이
-있다. 클릭하면 서버가 `agent/src/run.js`를 그대로 실행하고, 콘솔에 찍히는 것과 동일한
-단계별 로그 + 최종 판정을 오른쪽 패널에 실시간으로 보여준다. 발표/시연 영상은 이 화면과
-Playwright가 띄우는 브라우저 창을 같이 녹화하면 된다. 상단의 "새 데모 세션" 버튼은 모든
-구독 상태를 다시 "이용중"으로 리셋한다 (uid를 새로 발급하는 방식).
+구독 목록 카드마다 "AI Agent로 해지 (정상)" / "(공격 시뮬레이션)" 버튼이 있다. 클릭하면
+`agent/src/run.js`가 실행되고, 단계별 로그와 최종 판정이 오른쪽 패널에 실시간으로 뜬다.
 
-## 평가 지표 측정
+<br/>
+
+## ☁️ 배포하기 (Render)
+
+`mock-services`, `agent`, `dashboard`를 컨테이너 하나로 묶은 Dockerfile이 준비돼 있다.
+
+1. [render.com](https://render.com)에서 GitHub 계정으로 가입
+2. New → Blueprint → 이 저장소 선택 (루트의 `render.yaml` 자동 인식)
+3. Deploy. 첫 빌드는 Playwright 이미지(약 2GB)라 5~10분 소요
+4. `https://darkpattern-agent-integrity-XXXX.onrender.com` 형태의 URL 발급
+
+무료 플랜은 15분간 요청이 없으면 슬립 상태가 되고, 다음 요청에서 10~30초 정도 지연(cold
+start)이 있다. 시연 직전에 한 번 미리 접속해두는 것을 권장한다. 공개 URL이므로 팀 내부
+공유와 데모 용도로만 쓰고, 무제한 공개 배포로 남겨두지 않는다.
+
+로컬 Docker로 먼저 확인하려면:
 
 ```bash
-cd agent
-node scripts/evaluate.js 5   # 서비스 4개 x (정상/공격) x 5회 = 40회 자동 실행
+docker build -t darkpattern .
+docker run -p 5000:5000 -e PORT=5000 darkpattern
+# http://localhost:5000
 ```
-
-공격 차단률, 정상 업무 성공률(오탐률), 평균 지연시간을 계산해 콘솔에 출력하고
-`agent/eval-results.json`에 원본 결과를 저장한다. 로컬에서 3회 반복 기준 공격 차단률
-100%, 정상 성공률 100%(오탐 0%), 평균 지연 1.3~1.6초가 나왔다 — 보고서의 "5주차: 성공률/
-차단률/오탐률/지연시간 측정" 항목에 그대로 쓸 수 있는 수치다.
-
-## 공개 URL로 배포하기 (Render)
-
-`mock-services` + `agent` + `dashboard`를 컨테이너 하나로 묶은 `Dockerfile`이 준비되어
-있다. 팀원들과 공유할 실제 URL이 필요하면:
-
-1. [render.com](https://render.com)에서 GitHub 계정으로 무료 가입
-2. New → Blueprint → 이 저장소 선택 (루트의 `render.yaml`을 자동으로 인식함)
-3. Deploy 클릭 — 첫 빌드는 Playwright 이미지(약 2GB) 때문에 5~10분 정도 걸림
-4. 완료되면 `https://darkpattern-agent-integrity-XXXX.onrender.com` 같은 URL이 발급됨
-
-**주의사항**
-- Render 무료 플랜은 15분간 요청이 없으면 슬립 상태가 되고, 다음 요청에서 10~30초 정도
-  깨어나는 지연(cold start)이 있다. 시연/발표 직전에 한 번 미리 접속해두면 지연 없이 바로
-  쓸 수 있다.
-- 공개 URL이므로 아무나 `/api/run`을 호출해 브라우저 자동화를 실행시킬 수 있다. 팀 내부
-  공유·데모 용도로만 링크를 쓰고, 무제한 공개 배포로 남겨두지 않는 걸 권장한다.
-- 로컬 Docker로 먼저 확인하려면: `docker build -t darkpattern . && docker run -p 5000:5000
-  -e PORT=5000 darkpattern` 후 `http://localhost:5000` 접속.
