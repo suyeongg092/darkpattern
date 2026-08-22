@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+screenshots/
+logs/
+detections_*.json
+report_*.html
