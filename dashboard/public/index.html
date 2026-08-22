@@ -32,7 +32,7 @@
     font-variant-numeric: tabular-nums;
   }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
 
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -56,94 +56,13 @@
   .page-title { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
   .page-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 
-  .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 22px; max-width: 900px; }
-  @media (max-width: 640px) { .summary { grid-template-columns: 1fr; max-width: 400px; } }
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
   .summary-box {
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
   }
   .summary-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
   .summary-value { font-size: 19px; font-weight: 800; margin-top: 5px; letter-spacing: -0.2px; color: var(--accent); }
   .summary-value.small { font-size: 14px; color: var(--ink); }
-
-  /* --- live screen section (full width, above the two-column layout) --- */
-  .screen-section { margin-bottom: 24px; }
-  .screen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .screen-title-group { display: flex; align-items: baseline; gap: 8px; }
-  .panel-title {
-    font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-2);
-  }
-  .screen-sub { font-size: 11.5px; color: var(--muted); }
-  .screen-controls { display: flex; align-items: center; gap: 14px; }
-
-  .toggle { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); cursor: pointer; user-select: none; }
-  .toggle input { display: none; }
-  .toggle-track {
-    width: 30px; height: 17px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border);
-    position: relative; transition: background .15s;
-  }
-  .toggle-track::after {
-    content: ""; position: absolute; top: 1px; left: 1px; width: 13px; height: 13px; border-radius: 50%;
-    background: var(--muted); transition: transform .15s, background .15s;
-  }
-  .toggle input:checked + .toggle-track { background: var(--accent-weak); border-color: var(--accent); }
-  .toggle input:checked + .toggle-track::after { transform: translateX(13px); background: var(--accent); }
-
-  .ghost-btn {
-    font-size: 12px; color: var(--ink-2); background: none; border: 1px solid var(--border);
-    border-radius: 6px; padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;
-  }
-  .ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .ghost-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
-
-  .screen {
-    width: 100%; aspect-ratio: 16 / 8; border-radius: 10px; background: #000;
-    border: 1px solid var(--border);
-    position: relative; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    transition: max-width .2s, aspect-ratio .2s;
-  }
-  .screen.mobile {
-    max-width: 300px; aspect-ratio: 390 / 844; margin: 0 auto;
-    border-radius: 30px; border: 6px solid #1c1f24; box-shadow: 0 0 0 1px var(--border);
-  }
-  .screen.mobile::before {
-    content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    width: 70px; height: 16px; border-radius: 999px; background: #1c1f24; z-index: 2;
-  }
-  .screen.collapsed { display: none; }
-  .screen img { width: 100%; height: 100%; object-fit: contain; display: none; }
-  .screen img.on { display: block; }
-  .screen-placeholder { color: var(--muted); font-size: 13px; text-align: center; padding: 0 20px; line-height: 1.7; }
-  .screen-badge {
-    position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 700; color: #fff;
-    background: rgba(242,73,87,.92); padding: 4px 10px; border-radius: 5px; display: none;
-    align-items: center; gap: 5px;
-  }
-  .screen-badge.past { background: rgba(154,161,171,.92); }
-  .screen-badge.on { display: flex; }
-  .screen-badge .live-dot { background: #fff; }
-  .live-dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
-
-  .history-panel {
-    margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 8px; max-height: 280px; overflow-y: auto;
-  }
-  .history-panel.hidden { display: none; }
-  .history-item {
-    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; cursor: pointer;
-  }
-  .history-item:hover { background: var(--surface-2); }
-  .history-item .h-verdict-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  .h-ok { background: var(--success); }
-  .h-blocked { background: var(--warning); }
-  .h-violation { background: var(--danger); }
-  .history-item .h-name { font-size: 12.5px; font-weight: 600; flex: 1; min-width: 0; }
-  .history-item .h-meta { font-size: 11px; color: var(--muted); }
-  .history-empty { font-size: 12px; color: var(--muted); padding: 10px; }
-
-  .layout { display: grid; grid-template-columns: 1fr 0.85fr; gap: 20px; align-items: start; }
-  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 
   .section-label {
     font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em;
@@ -158,6 +77,10 @@
   .row:last-child { border-bottom: none; }
 
   .row-top { display: flex; align-items: center; gap: 12px; }
+  .row-link {
+    display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+    text-decoration: none; color: inherit;
+  }
   .avatar {
     width: 38px; height: 38px; border-radius: 10px; flex: none;
     display: flex; align-items: center; justify-content: center;
@@ -166,75 +89,27 @@
   .row-id { flex: 1; min-width: 0; }
   .row-name { font-weight: 700; font-size: 14px; }
   .row-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
-  .row-right { text-align: right; }
+  .row-go { color: var(--border); font-size: 20px; line-height: 1; flex: none; }
+  .row-right { text-align: right; flex: none; }
   .dday {
     font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
     background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--border);
   }
   .dday.urgent { background: var(--danger-weak); color: var(--danger); border-color: transparent; }
-  .row-cancelled-tag { font-size: 11px; color: var(--muted); }
+  .row-status-tag { font-size: 11px; color: var(--muted); font-weight: 600; }
 
   .insight { margin-top: 8px; font-size: 12px; color: var(--ink-2); }
   .note-line { margin-top: 6px; font-size: 11px; color: var(--warning); }
 
-  .actions { margin-top: 12px; display: flex; align-items: center; gap: 16px; }
-  .btn-primary {
-    font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 7px;
-    border: 1px solid var(--accent); background: var(--accent); color: #06201d; cursor: pointer;
+  .actions { margin-top: 12px; }
+  .site-link {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
+    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--accent);
+    background: var(--accent); color: #06201d; text-decoration: none;
   }
-  .btn-primary:disabled { opacity: .3; cursor: default; }
-  .btn-primary:hover:not(:disabled) { background: #26c4b0; }
-  .link-danger {
-    font-size: 12px; font-weight: 600; color: var(--danger); background: none; border: none;
-    cursor: pointer; padding: 0; opacity: .9;
-  }
-  .link-danger:hover:not(:disabled) { text-decoration: underline; }
-  .link-danger:disabled { opacity: .3; cursor: default; }
-
-  .panel {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px 18px; min-height: 320px; position: sticky; top: 20px;
-  }
-  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .panel-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+  .site-link:hover { background: #26c4b0; }
 
   .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
-
-  .steps { position: relative; }
-  .step { display: flex; gap: 10px; padding-bottom: 14px; position: relative; }
-  .step:not(:last-child)::before {
-    content: ""; position: absolute; left: 9px; top: 22px; bottom: -2px; width: 1.5px;
-    background: var(--border);
-  }
-  .step-icon {
-    width: 19px; height: 19px; border-radius: 4px; flex: none; margin-top: 1px;
-    display: flex; align-items: center; justify-content: center; font-size: 11px;
-    background: var(--surface-2); color: var(--muted); font-weight: 700; border: 1px solid var(--border);
-  }
-  .step-icon.ok { background: var(--success-weak); color: var(--success); border-color: transparent; }
-  .step-icon.bad { background: var(--danger-weak); color: var(--danger); border-color: transparent; }
-  .step-body { flex: 1; min-width: 0; }
-  .step-label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
-  .step-detail {
-    margin-top: 3px; font-size: 11px; color: var(--ink-2); word-break: break-all;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace; line-height: 1.5;
-    background: var(--surface-2); border-radius: 6px; padding: 5px 8px; border: 1px solid var(--border);
-  }
-  .step-waiting { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .ring {
-    width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border);
-    border-top-color: var(--accent); animation: spin .7s linear infinite; flex: none;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .verdict {
-    margin-top: 8px; padding: 12px 14px; border-radius: 8px; font-size: 12.5px; line-height: 1.5;
-    border: 1px solid transparent;
-  }
-  .verdict-title { font-weight: 800; font-size: 13px; margin-bottom: 2px; }
-  .verdict-ok { background: var(--success-weak); color: var(--success); }
-  .verdict-blocked { background: var(--warning-weak); color: var(--warning); }
-  .verdict-violation { background: var(--danger-weak); color: var(--danger); }
 
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000;
@@ -248,18 +123,15 @@
   .modal-mascot { font-size: 44px; margin-bottom: 10px; }
   .modal-title { font-size: 14px; line-height: 1.6; color: var(--ink); margin-bottom: 20px; }
   .modal-actions { display: flex; gap: 10px; justify-content: center; }
-  .modal-actions .btn-primary { flex: 1; padding: 10px 14px; }
-  .modal-actions .ghost-btn { flex: 1; justify-content: center; padding: 10px 14px; }
-
-  .pattern-tag {
-    display: inline-block; margin-top: 6px; font-size: 10.5px; font-weight: 700;
-    padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.08); color: inherit;
+  .modal-actions .btn-primary {
+    flex: 1; padding: 10px 14px; font-size: 12px; font-weight: 700; border-radius: 7px;
+    border: 1px solid var(--accent); background: var(--accent); color: #06201d; cursor: pointer;
+    text-decoration: none; display: flex; align-items: center; justify-content: center;
   }
-
-  .hippo-roam { display: inline-block; animation: hippo-bounce .6s ease-in-out infinite; }
-  @keyframes hippo-bounce {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-3px) rotate(-6deg); }
+  .modal-actions .ghost-btn {
+    flex: 1; justify-content: center; padding: 10px 14px; font-size: 12px; color: var(--ink-2);
+    background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center;
   }
 </style>
 </head>
@@ -291,56 +163,11 @@
       <div class="summary-label">다가오는 결제</div>
       <div class="summary-value small" id="summarySoonest">-</div>
     </div>
-    <div class="summary-box">
-      <div class="summary-label">🦛 해지하마가 막은 공격</div>
-      <div class="summary-value" id="summaryBlocked">-</div>
-    </div>
   </div>
 
-  <div class="screen-section">
-    <div class="screen-head">
-      <div class="screen-title-group">
-        <div class="panel-title">실행 화면</div>
-        <div class="screen-sub">Agent가 실제로 보고 있는 화면을 그대로 보여줍니다</div>
-      </div>
-      <div class="screen-controls">
-        <button class="ghost-btn" id="deviceMobileBtn" data-device="mobile">모바일</button>
-        <button class="ghost-btn" id="devicePcBtn" data-device="pc">PC</button>
-        <label class="toggle">
-          <input type="checkbox" id="screenToggle" checked>
-          <span class="toggle-track"></span>
-          화면 표시
-        </label>
-        <button class="ghost-btn" id="historyBtn">지난 기록 (<span id="historyCount">0</span>)</button>
-      </div>
-    </div>
-    <div class="screen" id="screen">
-      <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>실시간</div>
-      <img id="screenImg" alt="agent live view">
-      <div class="screen-placeholder" id="screenPlaceholder">구독 목록에서 "AI Agent로 해지하기" 또는<br>"공격 시뮬레이션으로 테스트"를 누르면<br>여기에 실제 다크패턴 사이트 화면이 실시간으로 나타납니다</div>
-    </div>
-    <div class="history-panel hidden" id="historyPanel">
-      <div class="history-empty">아직 실행 기록이 없어요.</div>
-    </div>
-  </div>
-
-  <div class="layout">
-    <div>
-      <div class="section-label" id="sectionTitle">내 구독</div>
-      <div class="list" id="cards">
-        <div class="row"><div class="placeholder">불러오는 중...</div></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title">실행 파이프라인</div>
-      </div>
-      <div class="panel-sub">정책 변환부터 사후 검증까지, 무결성 판단 단계</div>
-      <div id="logPanel">
-        <div class="placeholder">왼쪽 목록에서 실행하면 여기에 단계별 로그가 표시됩니다.</div>
-      </div>
-    </div>
+  <div class="section-label" id="sectionTitle">내 구독</div>
+  <div class="list" id="cards">
+    <div class="row"><div class="placeholder">불러오는 중...</div></div>
   </div>
 </div>
 
@@ -349,7 +176,7 @@
     <div class="modal-mascot">🦛</div>
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-actions">
-      <button class="btn-primary" id="modalYesBtn">해지 요청하기</button>
+      <a class="btn-primary" id="modalYesBtn" href="#">해지하러 가기</a>
       <button class="ghost-btn" id="modalNoBtn">괜찮아요</button>
     </div>
   </div>
@@ -357,18 +184,15 @@
 
 <script>
 const ICONS = {
+  'streamnow': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4.5a1 1 0 0 1 1.5-.87l12 7.5a1 1 0 0 1 0 1.74l-12 7.5A1 1 0 0 1 5 19.5v-15Z"/></svg>',
   'ordernow-club': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 8h9l1.2 11.2a2 2 0 0 1-2 2.1H8.3a2 2 0 0 1-2-2.1L7.5 8Z"/><path d="M9 8a3 3 0 0 1 6 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
   'supercart-plus': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.2 9h11.6l-1 9.8a2.2 2.2 0 0 1-2.2 2H9.4a2.2 2.2 0 0 1-2.2-2L6.2 9Z"/><path d="M9 9a3 3 0 0 1 6 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9.5" cy="21.2" r="1"/><circle cx="15.5" cy="21.2" r="1"/></svg>',
   'primevault': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 4.5 6v6.2c0 5 3.2 8.6 7.5 9.8 4.3-1.2 7.5-4.8 7.5-9.8V6L12 2.5Z"/><path d="M9.2 12.3l2 2.1 3.6-4.1" fill="none" stroke="var(--surface)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   'cloudstudio': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 17a4 4 0 0 1-.5-7.97A5 5 0 0 1 16.2 8.1 4.5 4.5 0 0 1 17.5 17H7Z"/></svg>',
+  'readwell': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5C20 4.7 19.3 4 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5v-13Z" opacity=".55"/></svg>',
 };
 
-const DARK_PATTERN_TYPES = {
-  'ordernow-club': '몰래 재활성화형',
-  'supercart-plus': '액션 위장형',
-  'primevault': '제출 경로 바꿔치기형',
-  'cloudstudio': '청구액 불일치형',
-};
+const STATUS_LABELS = { none: '미가입', cancelled: '해지완료', scheduled: '해지 예약' };
 
 let uid = localStorage.getItem('dp_uid');
 if (!uid) {
@@ -382,122 +206,10 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.setItem('dp_uid', uid);
   document.getElementById('sessionLabel').textContent = '세션 · ' + uid.slice(-10);
   loadSubscriptions();
-  loadHistory();
 });
 
-// --- screen show/hide toggle ---
-const screenEl = document.getElementById('screen');
-const screenToggle = document.getElementById('screenToggle');
-let showScreen = localStorage.getItem('dp_showScreen') !== '0';
-screenToggle.checked = showScreen;
-if (!showScreen) screenEl.classList.add('collapsed');
-screenToggle.addEventListener('change', () => {
-  showScreen = screenToggle.checked;
-  localStorage.setItem('dp_showScreen', showScreen ? '1' : '0');
-  screenEl.classList.toggle('collapsed', !showScreen);
-});
-
-// --- device (PC / mobile viewport) switch ---
-const deviceMobileBtn = document.getElementById('deviceMobileBtn');
-const devicePcBtn = document.getElementById('devicePcBtn');
-let device = localStorage.getItem('dp_device') || 'mobile';
-function applyDevice() {
-  screenEl.classList.toggle('mobile', device === 'mobile');
-  deviceMobileBtn.classList.toggle('active', device === 'mobile');
-  devicePcBtn.classList.toggle('active', device === 'pc');
-}
-applyDevice();
-deviceMobileBtn.addEventListener('click', () => {
-  device = 'mobile';
-  localStorage.setItem('dp_device', device);
-  applyDevice();
-});
-devicePcBtn.addEventListener('click', () => {
-  device = 'pc';
-  localStorage.setItem('dp_device', device);
-  applyDevice();
-});
-
-// --- history panel ---
-const historyPanel = document.getElementById('historyPanel');
-const historyBtn = document.getElementById('historyBtn');
-let historyOpen = false;
-historyBtn.addEventListener('click', () => {
-  historyOpen = !historyOpen;
-  historyBtn.classList.toggle('active', historyOpen);
-  historyPanel.classList.toggle('hidden', !historyOpen);
-  if (historyOpen) loadHistory();
-});
-
-function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  const min = Math.floor(diff / 60000);
-  if (min < 1) return '방금 전';
-  if (min < 60) return `${min}분 전`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}시간 전`;
-  return `${Math.floor(hr / 24)}일 전`;
-}
-
-async function loadHistory() {
-  const res = await fetch('/api/history?uid=' + encodeURIComponent(uid));
-  const data = await res.json();
-  document.getElementById('historyCount').textContent = data.history.length;
-  const blockedCount = data.history.filter((h) => h.verdict.blocked || h.verdict.integrityViolation).length;
-  document.getElementById('summaryBlocked').textContent = `${blockedCount}건`;
-  if (!historyOpen) return;
-  if (!data.history.length) {
-    historyPanel.innerHTML = '<div class="history-empty">아직 실행 기록이 없어요. 실행 기록은 7일간 보관돼요.</div>';
-    return;
-  }
-  historyPanel.innerHTML = '';
-  for (const h of data.history) {
-    const item = document.createElement('div');
-    item.className = 'history-item';
-    const dotClass = h.verdict.blocked ? 'h-blocked' : h.verdict.integrityViolation ? 'h-violation' : 'h-ok';
-    const label = h.verdict.blocked ? '사전 차단' : h.verdict.integrityViolation ? '위반 탐지' : '정상 완료';
-    item.innerHTML = `
-      <span class="h-verdict-dot ${dotClass}"></span>
-      <span class="h-name">${escapeHtml(h.serviceName)}${h.attack ? ' · 공격 시뮬레이션' : ''}</span>
-      <span class="h-meta">${label} · ${timeAgo(h.at)}</span>
-    `;
-    item.addEventListener('click', () => loadHistoryDetail(h.id));
-    historyPanel.appendChild(item);
-  }
-}
-
-async function loadHistoryDetail(id) {
-  const res = await fetch(`/api/history/${id}?uid=` + encodeURIComponent(uid));
-  const data = await res.json();
-  if (data.error) {
-    alert(data.error);
-    return;
-  }
-  const screenImg = document.getElementById('screenImg');
-  const screenPlaceholder = document.getElementById('screenPlaceholder');
-  const screenBadge = document.getElementById('screenBadge');
-  if (data.device) {
-    device = data.device;
-    localStorage.setItem('dp_device', device);
-    applyDevice();
-  }
-  if (data.lastFrame) {
-    screenImg.src = 'data:image/jpeg;base64,' + data.lastFrame;
-    screenImg.classList.add('on');
-    screenPlaceholder.style.display = 'none';
-  }
-  screenBadge.className = 'screen-badge on past';
-  screenBadge.innerHTML = `지난 기록 · ${timeAgo(data.at)}`;
-  renderLog(data.logs, data.verdict);
-  historyOpen = false;
-  historyBtn.classList.remove('active');
-  historyPanel.classList.add('hidden');
-  if (!showScreen) {
-    showScreen = true;
-    screenToggle.checked = true;
-    localStorage.setItem('dp_showScreen', '1');
-    screenEl.classList.remove('collapsed');
-  }
+function siteHref(servicePath) {
+  return '/' + servicePath + '?uid=' + encodeURIComponent(uid);
 }
 
 async function loadSubscriptions() {
@@ -532,12 +244,7 @@ function maybeShowSuggestModal(subscriptions) {
   document.getElementById('modalTitle').textContent =
     `${target.suggestionText} 해지하마가 대신 해지해드릴까요?`;
 
-  const rowEl = document.querySelector(`button[data-service="${target.path}"][data-attack="0"]`)?.closest('.row');
-
-  document.getElementById('modalYesBtn').onclick = () => {
-    modal.classList.add('hidden');
-    if (rowEl) runAgent(target.path, false, rowEl);
-  };
+  document.getElementById('modalYesBtn').href = siteHref(target.path);
   document.getElementById('modalNoBtn').onclick = () => {
     modal.classList.add('hidden');
   };
@@ -551,131 +258,28 @@ function renderRow(s) {
   const urgent = isActive && s.daysUntilBilling <= 3;
   const rightHtml = isActive
     ? `<span class="dday ${urgent ? 'urgent' : ''}">${s.daysUntilBilling === 0 ? '오늘 결제' : s.daysUntilBilling + '일 뒤'}</span>`
-    : `<span class="row-cancelled-tag">해지완료</span>`;
+    : `<span class="row-status-tag">${STATUS_LABELS[s.status] || s.status}</span>`;
   const icon = ICONS[s.path] || '';
+  const href = siteHref(s.path);
   div.innerHTML = `
     <div class="row-top">
-      <div class="avatar" style="background:${s.accent}1f;color:${s.accent}">${icon}</div>
-      <div class="row-id">
-        <div class="row-name">${s.name}</div>
-        <div class="row-sub">${s.price.toLocaleString()}원 · 월간 · 이번 달 ${s.usageThisMonth}회 사용</div>
-      </div>
+      <a class="row-link" href="${href}">
+        <div class="avatar" style="background:${s.accent}1f;color:${s.accent}">${icon}</div>
+        <div class="row-id">
+          <div class="row-name">${s.name}</div>
+          <div class="row-sub">${s.price.toLocaleString()}원 · 월간 · 이번 달 ${s.usageThisMonth}회 사용</div>
+        </div>
+        <span class="row-go">&rsaquo;</span>
+      </a>
       <div class="row-right">${rightHtml}</div>
     </div>
     ${s.suggestionText ? `<div class="insight">${s.suggestionText}</div>` : ''}
     ${s.note ? `<div class="note-line">최근 처리 기록 · ${s.note}</div>` : ''}
     <div class="actions">
-      <button class="btn-primary" data-service="${s.path}" data-attack="0" ${!isActive ? 'disabled' : ''}>AI Agent로 해지하기</button>
-      <button class="link-danger" data-service="${s.path}" data-attack="1" ${!isActive ? 'disabled' : ''}>공격 시뮬레이션으로 테스트</button>
+      <a class="site-link" href="${href}">사이트에서 확인하기 &rsaquo;</a>
     </div>
   `;
-  div.querySelectorAll('button[data-service]').forEach((btn) => {
-    btn.addEventListener('click', () => runAgent(s.path, btn.dataset.attack === '1', div));
-  });
   return div;
-}
-
-function runAgent(service, attack, rowEl) {
-  const screenImg = document.getElementById('screenImg');
-  const screenPlaceholder = document.getElementById('screenPlaceholder');
-  const screenBadge = document.getElementById('screenBadge');
-  const buttons = rowEl.querySelectorAll('button');
-  buttons.forEach((b) => (b.disabled = true));
-
-  screenImg.classList.remove('on');
-  screenPlaceholder.style.display = 'block';
-  screenPlaceholder.textContent = '연결 중...';
-  screenBadge.className = 'screen-badge on';
-  screenBadge.innerHTML = '<span class="live-dot"></span>실시간';
-
-  const logPanel = document.getElementById('logPanel');
-  logPanel.innerHTML = '';
-  const stepsEl = document.createElement('div');
-  stepsEl.className = 'steps';
-  logPanel.appendChild(stepsEl);
-  const waitingEl = document.createElement('div');
-  waitingEl.className = 'step-waiting';
-  waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 출동 중...';
-  logPanel.appendChild(waitingEl);
-
-  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device });
-  const es = new EventSource('/api/run-stream?' + qs.toString());
-
-  es.onmessage = (evt) => {
-    const msg = JSON.parse(evt.data);
-    if (msg.type === 'frame') {
-      screenPlaceholder.style.display = 'none';
-      screenImg.src = 'data:image/jpeg;base64,' + msg.data;
-      screenImg.classList.add('on');
-    } else if (msg.type === 'log') {
-      appendStep(stepsEl, msg.step, msg.detail);
-      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 확인하는 중...';
-      logPanel.appendChild(waitingEl); // keep waiting indicator at bottom
-    } else if (msg.type === 'verdict') {
-      waitingEl.remove();
-      logPanel.appendChild(verdictNode(msg.verdict));
-    } else if (msg.type === 'error') {
-      waitingEl.remove();
-      const errEl = document.createElement('div');
-      errEl.className = 'placeholder';
-      errEl.textContent = '오류: ' + msg.message;
-      logPanel.appendChild(errEl);
-    } else if (msg.type === 'done') {
-      screenBadge.classList.remove('on');
-      es.close();
-      loadSubscriptions();
-      loadHistory();
-    }
-  };
-
-  es.onerror = () => {
-    waitingEl.remove();
-    screenBadge.classList.remove('on');
-    es.close();
-  };
-}
-
-function appendStep(container, stepText, detail) {
-  const step = document.createElement('div');
-  step.className = 'step';
-  const isBad = /🛑/.test(stepText);
-  const isGood = /✅/.test(stepText);
-  const iconClass = isBad ? 'bad' : isGood ? 'ok' : '';
-  const iconGlyph = isBad ? '✕' : isGood ? '✓' : '';
-  step.innerHTML = `
-    <div class="step-icon ${iconClass}">${iconGlyph}</div>
-    <div class="step-body">
-      <div class="step-label">${escapeHtml(stepText.replace(/^\d+\.\s*/, '').replace(/[🛑✅]\s*/, ''))}</div>
-      ${detail ? `<div class="step-detail">${escapeHtml(detail)}</div>` : ''}
-    </div>`;
-  container.appendChild(step);
-}
-
-function renderLog(logs, verdict) {
-  const logPanel = document.getElementById('logPanel');
-  logPanel.innerHTML = '';
-  const stepsEl = document.createElement('div');
-  stepsEl.className = 'steps';
-  logPanel.appendChild(stepsEl);
-  for (const entry of logs) appendStep(stepsEl, entry.step, entry.detail);
-  logPanel.appendChild(verdictNode(verdict));
-}
-
-function verdictNode(v) {
-  const verdictEl = document.createElement('div');
-  const patternType = DARK_PATTERN_TYPES[v.service];
-  const patternTag = patternType ? `<div><span class="pattern-tag">${escapeHtml(patternType)}</span></div>` : '';
-  if (v.blocked) {
-    verdictEl.className = 'verdict verdict-blocked';
-    verdictEl.innerHTML = `<div class="verdict-title">🦛 해지하마, 수상해서 스톱!</div>${escapeHtml(v.reason)}${patternTag}`;
-  } else if (v.integrityViolation) {
-    verdictEl.className = 'verdict verdict-violation';
-    verdictEl.innerHTML = `<div class="verdict-title">🦛 해지하마가 속임수 잡아냄!</div>${escapeHtml(v.reason)}${patternTag}`;
-  } else {
-    verdictEl.className = 'verdict verdict-ok';
-    verdictEl.innerHTML = `<div class="verdict-title">검증하마! 해지 완료!</div>무결성 검증 통과 · ${v.durationMs}ms`;
-  }
-  return verdictEl;
 }
 
 function escapeHtml(str) {
@@ -683,7 +287,6 @@ function escapeHtml(str) {
 }
 
 loadSubscriptions();
-loadHistory();
 </script>
 </body>
 </html>
