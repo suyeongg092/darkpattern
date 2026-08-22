@@ -1,61 +1,26 @@
 const express = require("express");
 const path = require("path");
-const crypto = require("crypto");
-const { spawn } = require("child_process");
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 const MOCK_BASE = process.env.MOCK_BASE_URL || "http://localhost:4000";
-const AGENT_DIR = path.join(__dirname, "..", "..", "agent");
-const AGENT_ENTRY = path.join(AGENT_DIR, "src", "run.js");
 
+// NOTE: agent 통합이 빠진 임시 버전입니다 (agent 팀 작업이 아직 push되지 않아
+// mock-services만으로 시연/촬영이 가능하도록 임시로 뺐습니다). agent가 준비되면
+// git history의 이전 커밋(spawn 기반 /api/run, /api/run-stream, 실행 기록 기능)을
+// 참고해 다시 통합하면 됩니다.
 const SERVICES = [
+  { path: "streamnow", name: "StreamNow", price: 13900, usageThisMonth: 3, accent: "#7b3fe4", daysUntilBilling: 6 },
   { path: "ordernow-club", name: "OrderNow Club", price: 4900, usageThisMonth: 2, accent: "#12b886", daysUntilBilling: 2 },
   { path: "supercart-plus", name: "SuperCart Plus", price: 4990, usageThisMonth: 8, accent: "#3182f6", daysUntilBilling: 12 },
   { path: "primevault", name: "PrimeVault", price: 8900, usageThisMonth: 1, accent: "#7048e8", daysUntilBilling: 1 },
   { path: "cloudstudio", name: "CloudStudio", price: 24000, usageThisMonth: 15, accent: "#f76707", daysUntilBilling: 20 },
+  { path: "readwell", name: "ReadWell", price: 9900, usageThisMonth: 5, accent: "#1f7a5c", daysUntilBilling: 9 },
 ];
-
-// Past-run history: in-memory only (lost on server restart — acceptable for
-// a demo/prototype), capped per uid and auto-expired after 7 days so it
-// can't grow without bound. Stores only the *last* screencast frame per run,
-// not the full stream, to keep memory bounded.
-const HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const HISTORY_MAX_PER_UID = 20;
-const history = new Map(); // uid -> records, newest first
-
-function pruneHistory(uid) {
-  const now = Date.now();
-  const kept = (history.get(uid) || []).filter((r) => now - r.at < HISTORY_TTL_MS).slice(0, HISTORY_MAX_PER_UID);
-  history.set(uid, kept);
-  return kept;
-}
-
-function addHistory(uid, record) {
-  const kept = pruneHistory(uid);
-  kept.unshift(record);
-  history.set(uid, kept.slice(0, HISTORY_MAX_PER_UID));
-}
-
-app.get("/api/history", (req, res) => {
-  const uid = req.query.uid || "demo";
-  const list = pruneHistory(uid).map(({ lastFrame, logs, ...meta }) => ({
-    ...meta,
-    expiresAt: meta.at + HISTORY_TTL_MS,
-  }));
-  res.json({ history: list });
-});
-
-app.get("/api/history/:id", (req, res) => {
-  const uid = req.query.uid || "demo";
-  const record = pruneHistory(uid).find((r) => r.id === req.params.id);
-  if (!record) {
-    return res.status(404).json({ error: "기록을 찾을 수 없습니다 (7일이 지나 삭제되었을 수 있어요)" });
-  }
-  res.json(record);
-});
+const SERVICE_PATHS = new Set(SERVICES.map((s) => s.path));
 
 app.get("/api/subscriptions", async (req, res) => {
   const uid = req.query.uid || "demo";
@@ -86,109 +51,41 @@ app.get("/api/subscriptions", async (req, res) => {
   }
 });
 
-app.post("/api/run", (req, res) => {
-  const { service, uid, attack } = req.body || {};
-  if (!SERVICES.some((s) => s.path === service)) {
-    return res.status(400).json({ error: `unknown service: ${service}` });
+// mock-services는 배포 환경에서 loopback(127.0.0.1)에만 바인딩되어 브라우저가
+// 직접 접근할 수 없다 (Render의 자동 포트 스캔과 충돌 방지). 그래서 서비스
+// 카드를 눌렀을 때 "그 사이트로 그대로 넘어가는" 경험을 주려면 dashboard가
+// 같은 경로(prefix)로 요청을 그대로 중계해야 한다 — mock-services 내부 링크와
+// form action이 전부 `/${service}/...` 절대경로라서, 경로를 그대로 유지해야
+// 페이지 안에서의 이동(장바구니, 해지 플로우 등)도 깨지지 않는다.
+async function proxyToMock(req, res) {
+  if (!SERVICE_PATHS.has(req.params.service)) {
+    return res.status(404).send("알 수 없는 서비스입니다.");
   }
-  const args = [AGENT_ENTRY, service, uid || "demo", "--headless"];
-  if (attack) args.push("--attack");
-
-  const child = spawn("node", args, { cwd: AGENT_DIR });
-  let stdout = "";
-  let stderr = "";
-  child.stdout.on("data", (d) => (stdout += d.toString()));
-  child.stderr.on("data", (d) => (stderr += d.toString()));
-  child.on("close", () => {
-    const match = stdout.match(/RESULT_JSON:(.*)/);
-    if (!match) {
-      return res.status(500).json({ error: "agent 실행 실패", stderr, stdout });
-    }
-    res.json(JSON.parse(match[1]));
-  });
-});
-
-// Streams the agent's progress live instead of waiting for it to finish:
-// each stdout line is parsed as it arrives and pushed as its own SSE event,
-// so the frontend can light up pipeline steps as they actually happen.
-app.get("/api/run-stream", (req, res) => {
-  const { service, uid, attack, device } = req.query;
-  if (!SERVICES.some((s) => s.path === service)) {
-    return res.status(400).json({ error: `unknown service: ${service}` });
+  const target = `${MOCK_BASE}${req.originalUrl}`;
+  const init = { method: req.method, redirect: "manual" };
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    init.headers = { "content-type": "application/x-www-form-urlencoded" };
+    init.body = new URLSearchParams(req.body || {}).toString();
   }
-  const args = [AGENT_ENTRY, service, uid || "demo", "--headless"];
-  if (attack === "1" || attack === "true") args.push("--attack");
-  const deviceMode = device === "mobile" ? "mobile" : "pc";
-
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
-  const send = (payload) => res.write(`data: ${JSON.stringify(payload)}\n\n`);
-
-  const child = spawn("node", args, {
-    cwd: AGENT_DIR,
-    env: { ...process.env, STREAM_FRAMES: "1", SLOW_DEMO: "1", DEVICE: deviceMode },
-  });
-  let buffer = "";
-  let lastFrame = null;
-  const collectedLogs = [];
-  let finalVerdict = null;
-
-  child.stdout.on("data", (chunk) => {
-    buffer += chunk.toString();
-    const lines = buffer.split("\n");
-    buffer = lines.pop(); // keep the last (possibly incomplete) line
-
-    for (const line of lines) {
-      const frameMatch = line.match(/^FRAME:(.*)$/);
-      if (frameMatch) {
-        lastFrame = frameMatch[1];
-        send({ type: "frame", data: frameMatch[1] });
-        continue;
-      }
-      const resultMatch = line.match(/^RESULT_JSON:(.*)$/);
-      if (resultMatch) {
-        const { verdict } = JSON.parse(resultMatch[1]);
-        finalVerdict = verdict;
-        send({ type: "verdict", verdict });
-        continue;
-      }
-      const logMatch = line.match(/^\[[^\]]+\]\s(.+)$/);
-      if (logMatch) {
-        const rest = logMatch[1];
-        const sepIndex = rest.indexOf(" — ");
-        const step = sepIndex === -1 ? rest : rest.slice(0, sepIndex);
-        const detail = sepIndex === -1 ? null : rest.slice(sepIndex + 3);
-        collectedLogs.push({ step, detail });
-        send({ type: "log", step, detail });
-      }
+  try {
+    const r = await fetch(target, init);
+    // mock-services는 POST 처리 후 303 등으로 다음 화면으로 리다이렉트한다.
+    // Location이 절대경로(`/${service}/...`)라서 브라우저에 그대로 돌려줘도
+    // 같은 dashboard origin의 프록시 경로로 다시 들어와 정상 동작한다.
+    if (r.status >= 300 && r.status < 400 && r.headers.get("location")) {
+      return res.redirect(r.status, r.headers.get("location"));
     }
-  });
-
-  child.on("close", (code) => {
-    if (code !== 0) send({ type: "error", message: "agent 프로세스가 비정상 종료됨" });
-    if (finalVerdict) {
-      const serviceMeta = SERVICES.find((s) => s.path === service);
-      addHistory(uid || "demo", {
-        id: crypto.randomUUID(),
-        at: Date.now(),
-        service,
-        serviceName: serviceMeta ? serviceMeta.name : service,
-        attack: attack === "1" || attack === "true",
-        device: deviceMode,
-        verdict: finalVerdict,
-        logs: collectedLogs,
-        lastFrame,
-      });
-    }
-    send({ type: "done" });
-    res.end();
-  });
-
-  req.on("close", () => child.kill());
-});
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get("content-type");
+    if (ct) res.set("content-type", ct);
+    res.send(text);
+  } catch (err) {
+    res.status(502).send("mock-services에 연결할 수 없습니다 (localhost:4000이 떠 있는지 확인)");
+  }
+}
+app.all("/:service", proxyToMock);
+app.all("/:service/*", proxyToMock);
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
