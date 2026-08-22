@@ -7,6 +7,7 @@
 
 
 > 배포 URL: https://darkpattern-agent-integrity.onrender.com
+> (접속에 3분 정도 시간이 소요됩니다.)
 
 
 <br/>
