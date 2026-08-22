@@ -9,7 +9,7 @@
 > 배포 URL: https://darkpattern-agent-integrity.onrender.com
 > (접속에 3분 정도 시간이 소요됩니다.)
 >
-> ### 사용법
+### 사용법
 
 배포된 URL에 접속하면 "내 구독" 목록에 6개 서비스 카드가 뜬다.
 
