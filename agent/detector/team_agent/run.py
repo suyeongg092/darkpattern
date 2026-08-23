@@ -16,6 +16,7 @@ llm_rag 모드가 실제 LLM 판단을 쓰려면 실행 전에 OpenAI API 키를
 from __future__ import annotations
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -37,22 +38,89 @@ START_PATHS = {"ordernow-club": "/manage"}
 NEEDS_SIGNUP_BOOTSTRAP = {"streamnow"}  # uid가 미가입(status: none) 상태로 시작하는 서비스
 
 
+def _launch_kwargs(headless: bool, slow_mo: int) -> dict:
+    kwargs = {"headless": headless, "slow_mo": slow_mo}
+    # Some sandboxed environments preinstall a browser revision that doesn't
+    # match this playwright package version's own resolver (same problem the
+    # sibling JS agent's run.js works around with CHROMIUM_PATH) — fall back
+    # to an explicit binary only if the caller points at one that exists.
+    chromium_path = os.environ.get("CHROMIUM_PATH")
+    if chromium_path and Path(chromium_path).exists():
+        kwargs["executable_path"] = chromium_path
+    return kwargs
+
+
+def _start_screencast(page, on_frame):
+    """CDP screencast, mirroring agent/src/executors/base.js's startScreencast
+    so the dashboard can show this crawl live the same way it shows the JS
+    agent's runs. Emits raw base64 JPEG frames via on_frame; caller decides
+    the wire format."""
+    cdp = page.context.new_cdp_session(page)
+
+    def _on_frame(params):
+        on_frame(params["data"])
+        try:
+            cdp.send("Page.screencastFrameAck", {"sessionId": params["sessionId"]})
+        except Exception:
+            pass  # session may already be closing — never let ack failures kill the crawl
+
+    cdp.on("Page.screencastFrame", _on_frame)
+    cdp.send("Page.startScreencast", {
+        "format": "jpeg", "quality": 80, "maxWidth": 480, "maxHeight": 640, "everyNthFrame": 1,
+    })
+    return cdp
+
+
 def run_variant(service: str, mode: str, variant: str, uid: str, attack: bool,
-                 headless: bool, slow_mo: int, demo_pause: float, shot_dir=None):
+                 headless: bool, slow_mo: int, demo_pause: float, shot_dir=None,
+                 on_step=None, on_frame=None):
     start_path = START_PATHS.get(service, "/")
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless, slow_mo=slow_mo)
+        browser = p.chromium.launch(**_launch_kwargs(headless, slow_mo))
         page = browser.new_page(viewport={"width": 480, "height": 640})
+        if on_frame:
+            _start_screencast(page, on_frame)
         bootstrap_detections: list[dict] = []
         if service in NEEDS_SIGNUP_BOOTSTRAP:
             navigator.bootstrap_signup(page, BASE_URL, service, uid, variant,
                                         bootstrap_detections, demo_pause=demo_pause)
         result = navigator.crawl(page, BASE_URL, service, uid, variant, mode,
                                   attack=attack, start_path=start_path,
-                                  demo_pause=demo_pause, shot_dir=shot_dir)
+                                  demo_pause=demo_pause, shot_dir=shot_dir, on_step=on_step)
         browser.close()
     result.detections = bootstrap_detections + result.detections
     return result
+
+
+def run_live(service: str, mode: str, uid: str, attack: bool, headless: bool = True,
+             demo_pause: float = 0.4):
+    """One dark-variant crawl with live CDP screencast frames and per-step
+    events on stdout, for the dashboard's live "다크패턴 우회 실행" button.
+    Deliberately skips the CLI tool's clean-variant comparison, multi-mode
+    sweep, and HTML report — those are for offline scoring, not a live demo.
+
+    Wire format (stdout, line-buffered): FRAME:<base64 jpeg>, LOG:<json step>,
+    RESULT:<json final>. Mirrors the sibling JS agent's FRAME:/RESULT_JSON:
+    convention closely enough that the dashboard's existing SSE parsing
+    pattern extends to this process type instead of needing a new one.
+    """
+    def emit(kind, payload):
+        print(f"{kind}:{json.dumps(payload, ensure_ascii=False)}", flush=True)
+
+    result = run_variant(
+        service, mode, "dark", uid, attack, headless, 0, demo_pause,
+        on_step=lambda step_log: emit("LOG", step_log),
+        on_frame=lambda data: print(f"FRAME:{data}", flush=True),
+    )
+    emit("RESULT", {
+        "service": result.service,
+        "mode": result.mode,
+        "uid": result.uid,
+        "success": result.success,
+        "stepCount": result.step_count,
+        "finalStatus": result.final_status,
+        "detections": result.detections,
+    })
 
 
 def flow_level_detections(service: str, variant: str, dark_result, clean_result) -> list[dict]:
@@ -99,6 +167,14 @@ def main():
         bad = [m for m in modes if m not in ALL_MODES]
         if bad:
             ap.error(f"알 수 없는 모드: {bad} (선택 가능: {ALL_MODES}, 또는 all)")
+
+    # 대시보드가 "다크패턴 우회 실행" 버튼으로 이 프로세스를 spawn할 때 세팅하는
+    # 신호. dark 변형 하나만 CDP 스크린캐스트와 함께 라이브로 돌리고 끝낸다 —
+    # clean 비교, 여러 모드 스윕, HTML 리포트 생성(전부 오프라인 채점용)은 생략.
+    if os.environ.get("STREAM_FRAMES") == "1":
+        run_live(args.service, modes[0], args.uid, args.attack, headless=headless,
+                 demo_pause=demo_pause or 0.4)
+        return
 
     all_results = {}
     out_paths = []
