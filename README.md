@@ -58,11 +58,16 @@ Agent도 다크패턴 회피율이 사람과 비슷한 68.3%에 그친다는 결
 darkpattern/
 ├── mock-services/   다크패턴을 재현한 목업 사이트 5개 + 대조군 1개
 ├── agent/           판단, 실행, 검증을 수행하는 무결성 검증 Agent
+│   └── detector/ 다크패턴을 그때그때 판단해 우회하는 LLM+RAG 기반 탐지 Agent
 └── dashboard/        구독 목록, AI 제안, 실행 로그를 보여주는 실시간 시연 화면
 ```
 
 인터페이스 계약(경로, `data-testid`, API 스키마)은
-[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다.
+-[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다.
++[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다. `agent/`가 정해진
++서비스별 정책으로 위조를 검증하는 것과 달리, [`agent/detector`](agent/detector/README.md)는
++서비스에 종속되지 않은 코드로 다크패턴 자체를 판단하고 우회한다 — 실행 방법과 세 모드
++(`naive`/`rules`/`llm_rag`) 비교 결과는 해당 폴더의 README를 참고.
 
 <br/>
 
