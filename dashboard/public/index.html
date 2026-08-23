@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ko">
 <head>
@@ -16,6 +17,8 @@
     --muted: #766e5c;
     --accent: #0f9c8a;
     --accent-weak: rgba(15,156,138,.12);
+    --detector: #7048e8;
+    --detector-weak: rgba(112,72,232,.12);
     --success: #12915a;
     --success-weak: rgba(18,145,90,.12);
     --warning: #b3690a;
@@ -32,7 +35,7 @@
     font-variant-numeric: tabular-nums;
   }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 60px; }
 
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -52,17 +55,139 @@
   }
   .reset-link:hover { border-color: var(--accent); color: var(--accent); }
 
-  .page-head { padding: 4px 0 20px; }
+  .page-head { padding: 4px 0 20px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .page-title { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
   .page-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 
-  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+  .attack-toggle {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; cursor: pointer; user-select: none;
+  }
+  .attack-toggle input { display: none; }
+  .attack-toggle .dot2 { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex: none; }
+  .attack-toggle input:checked ~ .dot2 { background: var(--danger); }
+  .attack-toggle.on { border-color: var(--danger); color: var(--danger); background: var(--danger-weak); }
+
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; max-width: 500px; }
   .summary-box {
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
   }
   .summary-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
   .summary-value { font-size: 19px; font-weight: 800; margin-top: 5px; letter-spacing: -0.2px; color: var(--accent); }
   .summary-value.small { font-size: 14px; color: var(--ink); }
+
+  /* --- live screen --- */
+  .screen-section { margin-bottom: 24px; }
+  .screen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .screen-title-group { display: flex; align-items: baseline; gap: 8px; }
+  .panel-title {
+    font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-2);
+  }
+  .screen-sub { font-size: 11.5px; color: var(--muted); }
+  .screen-controls { display: flex; align-items: center; gap: 10px; }
+
+  .ghost-btn {
+    font-size: 12px; color: var(--ink-2); background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ghost-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+
+  .screen-layout { display: grid; grid-template-columns: 1fr 1.05fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .screen-layout { grid-template-columns: 1fr; } }
+
+  .screen {
+    width: 100%; aspect-ratio: 3 / 4; max-height: 520px; border-radius: 10px; background: #000;
+    border: 1px solid var(--border); margin: 0 auto;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .screen img { width: 100%; height: 100%; object-fit: contain; display: none; }
+  .screen img.on { display: block; }
+  .screen-placeholder { color: var(--muted); font-size: 13px; text-align: center; padding: 0 20px; line-height: 1.7; }
+  .screen-badge {
+    position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 700; color: #fff;
+    background: rgba(15,156,138,.92); padding: 4px 10px; border-radius: 5px; display: none;
+    align-items: center; gap: 5px; z-index: 2;
+  }
+  .screen-badge.detector { background: rgba(112,72,232,.92); }
+  .screen-badge.past { background: rgba(154,161,171,.92); }
+  .screen-badge.on { display: flex; }
+  .screen-badge .live-dot { background: #fff; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; min-height: 300px; max-height: 520px; overflow-y: auto;
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .panel-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+
+  .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
+
+  .steps { position: relative; }
+  .step { display: flex; gap: 10px; padding-bottom: 14px; position: relative; }
+  .step:not(:last-child)::before {
+    content: ""; position: absolute; left: 9px; top: 22px; bottom: -2px; width: 1.5px;
+    background: var(--border);
+  }
+  .step-icon {
+    width: 19px; height: 19px; border-radius: 4px; flex: none; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+    background: var(--surface-2); color: var(--muted); font-weight: 700; border: 1px solid var(--border);
+  }
+  .step-icon.ok { background: var(--success-weak); color: var(--success); border-color: transparent; }
+  .step-icon.bad { background: var(--danger-weak); color: var(--danger); border-color: transparent; }
+  .step-icon.det { background: var(--detector-weak); color: var(--detector); border-color: transparent; }
+  .step-body { flex: 1; min-width: 0; }
+  .step-label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .step-detail {
+    margin-top: 3px; font-size: 11px; color: var(--ink-2); word-break: break-all;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; line-height: 1.5;
+    background: var(--surface-2); border-radius: 6px; padding: 5px 8px; border: 1px solid var(--border);
+  }
+  .step-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .step-waiting { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .ring {
+    width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border);
+    border-top-color: var(--accent); animation: spin .7s linear infinite; flex: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .verdict {
+    margin-top: 8px; padding: 12px 14px; border-radius: 8px; font-size: 12.5px; line-height: 1.5;
+    border: 1px solid transparent;
+  }
+  .verdict-title { font-weight: 800; font-size: 13px; margin-bottom: 2px; }
+  .verdict-ok { background: var(--success-weak); color: var(--success); }
+  .verdict-blocked { background: var(--warning-weak); color: var(--warning); }
+  .verdict-violation { background: var(--danger-weak); color: var(--danger); }
+  .verdict-detector { background: var(--detector-weak); color: var(--detector); }
+
+  .pattern-tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700;
+    padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.08); color: inherit;
+  }
+
+  .history-panel {
+    margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px; max-height: 260px; overflow-y: auto;
+  }
+  .history-panel.hidden { display: none; }
+  .history-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; cursor: pointer;
+  }
+  .history-item:hover { background: var(--surface-2); }
+  .history-item .h-verdict-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .h-ok { background: var(--success); }
+  .h-blocked { background: var(--warning); }
+  .h-violation { background: var(--danger); }
+  .h-detector { background: var(--detector); }
+  .history-item .h-name { font-size: 12.5px; font-weight: 600; flex: 1; min-width: 0; }
+  .history-item .h-meta { font-size: 11px; color: var(--muted); }
+  .history-empty { font-size: 12px; color: var(--muted); padding: 10px; }
 
   .section-label {
     font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em;
@@ -101,15 +226,25 @@
   .insight { margin-top: 8px; font-size: 12px; color: var(--ink-2); }
   .note-line { margin-top: 6px; font-size: 11px; color: var(--warning); }
 
-  .actions { margin-top: 12px; }
-  .site-link {
-    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
-    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--accent);
-    background: var(--accent); color: #06201d; text-decoration: none;
+  .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn-primary {
+    font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 7px;
+    border: 1px solid var(--accent); background: var(--accent); color: #06201d; cursor: pointer;
   }
-  .site-link:hover { background: #26c4b0; }
-
-  .placeholder { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 2px; }
+  .btn-primary:disabled { opacity: .35; cursor: default; }
+  .btn-primary:hover:not(:disabled) { background: #26c4b0; }
+  .btn-detector {
+    font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 7px;
+    border: 1px solid var(--detector); background: var(--detector); color: #fff; cursor: pointer;
+  }
+  .btn-detector:disabled { opacity: .35; cursor: default; }
+  .btn-detector:hover:not(:disabled) { background: #5c37c9; }
+  .site-link {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--border);
+    background: none; color: var(--ink-2); text-decoration: none;
+  }
+  .site-link:hover { border-color: var(--accent); color: var(--accent); }
 
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000;
@@ -123,15 +258,13 @@
   .modal-mascot { font-size: 44px; margin-bottom: 10px; }
   .modal-title { font-size: 14px; line-height: 1.6; color: var(--ink); margin-bottom: 20px; }
   .modal-actions { display: flex; gap: 10px; justify-content: center; }
-  .modal-actions .btn-primary {
-    flex: 1; padding: 10px 14px; font-size: 12px; font-weight: 700; border-radius: 7px;
-    border: 1px solid var(--accent); background: var(--accent); color: #06201d; cursor: pointer;
-    text-decoration: none; display: flex; align-items: center; justify-content: center;
-  }
-  .modal-actions .ghost-btn {
-    flex: 1; justify-content: center; padding: 10px 14px; font-size: 12px; color: var(--ink-2);
-    background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
-    display: flex; align-items: center;
+  .modal-actions .btn-primary { flex: 1; padding: 10px 14px; }
+  .modal-actions .ghost-btn { flex: 1; justify-content: center; padding: 10px 14px; }
+
+  .hippo-roam { display: inline-block; animation: hippo-bounce .6s ease-in-out infinite; }
+  @keyframes hippo-bounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-3px) rotate(-6deg); }
   }
 </style>
 </head>
@@ -150,8 +283,15 @@
   </div>
 
   <div class="page-head">
-    <div class="page-title">구독 무결성 모니터링</div>
-    <div class="page-sub">다크패턴 뚫고, 위조는 잡아내는 AI 해지 Agent</div>
+    <div>
+      <div class="page-title">구독 무결성 모니터링</div>
+      <div class="page-sub">다크패턴 뚫고, 위조는 잡아내는 AI 해지 Agent</div>
+    </div>
+    <label class="attack-toggle" id="attackToggleLabel">
+      <input type="checkbox" id="attackToggle">
+      <span class="dot2"></span>
+      공격 시뮬레이션(ADI) 걸고 실행
+    </label>
   </div>
 
   <div class="summary" id="summary">
@@ -162,6 +302,39 @@
     <div class="summary-box">
       <div class="summary-label">다가오는 결제</div>
       <div class="summary-value small" id="summarySoonest">-</div>
+    </div>
+  </div>
+
+  <div class="screen-section">
+    <div class="screen-head">
+      <div class="screen-title-group">
+        <div class="panel-title">실행 화면</div>
+        <div class="screen-sub" id="screenModeLabel">Agent가 실제로 보고 있는 화면을 그대로 보여줍니다</div>
+      </div>
+      <div class="screen-controls">
+        <button class="ghost-btn" id="historyBtn">지난 기록 (<span id="historyCount">0</span>)</button>
+      </div>
+    </div>
+    <div class="screen-layout">
+      <div>
+        <div class="screen" id="screen">
+          <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>실시간</div>
+          <img id="screenImg" alt="agent live view">
+          <div class="screen-placeholder" id="screenPlaceholder">아래 목록에서 "🛡️ 무결성 검증" 또는<br>"🔍 다크패턴 우회"를 누르면<br>여기에 실제 다크패턴 사이트 화면이 실시간으로 나타납니다</div>
+        </div>
+        <div class="history-panel hidden" id="historyPanel">
+          <div class="history-empty">아직 실행 기록이 없어요.</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title" id="pipelineTitle">실행 파이프라인</div>
+        </div>
+        <div class="panel-sub" id="pipelineSub">왼쪽에서 실행 버튼을 누르면 여기에 단계별 로그가 표시됩니다.</div>
+        <div id="logPanel">
+          <div class="placeholder">대기 중...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -176,7 +349,7 @@
     <div class="modal-mascot">🦛</div>
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-actions">
-      <a class="btn-primary" id="modalYesBtn" href="#">해지하러 가기</a>
+      <button class="btn-primary" id="modalYesBtn">해지하마에게 맡기기</button>
       <button class="ghost-btn" id="modalNoBtn">괜찮아요</button>
     </div>
   </div>
@@ -193,6 +366,10 @@ const ICONS = {
 };
 
 const STATUS_LABELS = { none: '미가입', cancelled: '해지완료', scheduled: '해지 예약' };
+const DARK_PATTERN_TYPES = {
+  'ordernow-club': '몰래 재활성화형', 'supercart-plus': '액션 위장형',
+  'primevault': '제출 경로 바꿔치기형', 'cloudstudio': '청구액 불일치형', 'streamnow': '표시 결과 불일치형',
+};
 
 let uid = localStorage.getItem('dp_uid');
 if (!uid) {
@@ -206,10 +383,100 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.setItem('dp_uid', uid);
   document.getElementById('sessionLabel').textContent = '세션 · ' + uid.slice(-10);
   loadSubscriptions();
+  loadHistory();
+});
+
+// --- attack toggle (applies to whichever run button is clicked next) ---
+const attackToggle = document.getElementById('attackToggle');
+const attackToggleLabel = document.getElementById('attackToggleLabel');
+attackToggle.addEventListener('change', () => {
+  attackToggleLabel.classList.toggle('on', attackToggle.checked);
 });
 
 function siteHref(servicePath) {
   return '/' + servicePath + '?uid=' + encodeURIComponent(uid);
+}
+
+// --- history panel ---
+const historyPanel = document.getElementById('historyPanel');
+const historyBtn = document.getElementById('historyBtn');
+let historyOpen = false;
+historyBtn.addEventListener('click', () => {
+  historyOpen = !historyOpen;
+  historyBtn.classList.toggle('active', historyOpen);
+  historyPanel.classList.toggle('hidden', !historyOpen);
+  if (historyOpen) loadHistory();
+});
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return '방금 전';
+  if (min < 60) return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}시간 전`;
+  return `${Math.floor(hr / 24)}일 전`;
+}
+
+async function loadHistory() {
+  const res = await fetch('/api/history?uid=' + encodeURIComponent(uid));
+  const data = await res.json();
+  document.getElementById('historyCount').textContent = data.history.length;
+  if (!historyOpen) return;
+  if (!data.history.length) {
+    historyPanel.innerHTML = '<div class="history-empty">아직 실행 기록이 없어요. 실행 기록은 7일간 보관돼요.</div>';
+    return;
+  }
+  historyPanel.innerHTML = '';
+  for (const h of data.history) {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    let dotClass, label;
+    if (h.kind === 'detector') {
+      dotClass = 'h-detector';
+      label = h.result && h.result.success ? '우회 성공' : '실패/붙잡힘';
+    } else {
+      dotClass = h.verdict.blocked ? 'h-blocked' : h.verdict.integrityViolation ? 'h-violation' : 'h-ok';
+      label = h.verdict.blocked ? '사전 차단' : h.verdict.integrityViolation ? '위반 탐지' : '정상 완료';
+    }
+    const kindLabel = h.kind === 'detector' ? '🔍 탐지' : '🛡️ 무결성';
+    item.innerHTML = `
+      <span class="h-verdict-dot ${dotClass}"></span>
+      <span class="h-name">${kindLabel} · ${escapeHtml(h.serviceName)}${h.attack ? ' · 공격' : ''}</span>
+      <span class="h-meta">${label} · ${timeAgo(h.at)}</span>
+    `;
+    item.addEventListener('click', () => loadHistoryDetail(h.id));
+    historyPanel.appendChild(item);
+  }
+}
+
+async function loadHistoryDetail(id) {
+  const res = await fetch(`/api/history/${id}?uid=` + encodeURIComponent(uid));
+  const data = await res.json();
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+  const screenImg = document.getElementById('screenImg');
+  const screenPlaceholder = document.getElementById('screenPlaceholder');
+  const screenBadge = document.getElementById('screenBadge');
+  if (data.lastFrame) {
+    screenImg.src = 'data:image/jpeg;base64,' + data.lastFrame;
+    screenImg.classList.add('on');
+    screenPlaceholder.style.display = 'none';
+  }
+  screenBadge.className = 'screen-badge on past' + (data.kind === 'detector' ? ' detector' : '');
+  screenBadge.innerHTML = `지난 기록 · ${timeAgo(data.at)}`;
+  if (data.kind === 'detector') {
+    setPipelineLabel('detector');
+    renderDetectorLog(data.logs, data.result);
+  } else {
+    setPipelineLabel('integrity');
+    renderIntegrityLog(data.logs, data.verdict);
+  }
+  historyOpen = false;
+  historyBtn.classList.remove('active');
+  historyPanel.classList.add('hidden');
 }
 
 async function loadSubscriptions() {
@@ -244,7 +511,11 @@ function maybeShowSuggestModal(subscriptions) {
   document.getElementById('modalTitle').textContent =
     `${target.suggestionText} 해지하마가 대신 해지해드릴까요?`;
 
-  document.getElementById('modalYesBtn').href = siteHref(target.path);
+  const rowEl = document.querySelector(`button[data-service="${target.path}"][data-kind="integrity"]`)?.closest('.row');
+  document.getElementById('modalYesBtn').onclick = () => {
+    modal.classList.add('hidden');
+    if (rowEl) runIntegrity(target.path, rowEl);
+  };
   document.getElementById('modalNoBtn').onclick = () => {
     modal.classList.add('hidden');
   };
@@ -276,10 +547,226 @@ function renderRow(s) {
     ${s.suggestionText ? `<div class="insight">${s.suggestionText}</div>` : ''}
     ${s.note ? `<div class="note-line">최근 처리 기록 · ${s.note}</div>` : ''}
     <div class="actions">
+      <button class="btn-primary" data-service="${s.path}" data-kind="integrity" ${!isActive ? 'disabled' : ''}>🛡️ 무결성 검증</button>
+      <button class="btn-detector" data-service="${s.path}" data-kind="detector" ${!isActive ? 'disabled' : ''}>🔍 다크패턴 우회</button>
       <a class="site-link" href="${href}">사이트에서 확인하기 &rsaquo;</a>
     </div>
   `;
+  div.querySelector('button[data-kind="integrity"]').addEventListener('click', () => runIntegrity(s.path, div));
+  div.querySelector('button[data-kind="detector"]').addEventListener('click', () => runDetector(s.path, div));
   return div;
+}
+
+function setPipelineLabel(kind) {
+  const screenModeLabel = document.getElementById('screenModeLabel');
+  const pipelineTitle = document.getElementById('pipelineTitle');
+  const pipelineSub = document.getElementById('pipelineSub');
+  if (kind === 'detector') {
+    screenModeLabel.textContent = 'agent/detector(team_agent)가 다크패턴을 판단하며 클릭하는 화면입니다';
+    pipelineTitle.textContent = '다크패턴 판단 로그';
+    pipelineSub.textContent = '매 페이지마다 무엇을 다크패턴으로 보고 어떤 후보를 왜 눌렀는지 표시합니다.';
+  } else {
+    screenModeLabel.textContent = 'agent가 실제로 보고 있는 화면을 그대로 보여줍니다';
+    pipelineTitle.textContent = '실행 파이프라인';
+    pipelineSub.textContent = '정책 변환부터 사후 검증까지, 무결성 판단 단계입니다.';
+  }
+}
+
+function beginRun(rowEl, kind) {
+  const screenImg = document.getElementById('screenImg');
+  const screenPlaceholder = document.getElementById('screenPlaceholder');
+  const screenBadge = document.getElementById('screenBadge');
+  rowEl.querySelectorAll('button').forEach((b) => (b.disabled = true));
+
+  screenImg.classList.remove('on');
+  screenPlaceholder.style.display = 'block';
+  screenPlaceholder.textContent = '연결 중...';
+  screenBadge.className = 'screen-badge on' + (kind === 'detector' ? ' detector' : '');
+  screenBadge.innerHTML = '<span class="live-dot"></span>실시간';
+  setPipelineLabel(kind);
+
+  const logPanel = document.getElementById('logPanel');
+  logPanel.innerHTML = '';
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'steps';
+  logPanel.appendChild(stepsEl);
+  const waitingEl = document.createElement('div');
+  waitingEl.className = 'step-waiting';
+  waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 출동 중...';
+  logPanel.appendChild(waitingEl);
+
+  return { screenImg, screenPlaceholder, screenBadge, stepsEl, waitingEl };
+}
+
+function endRun(rowEl) {
+  rowEl.querySelectorAll('button').forEach((b) => (b.disabled = false));
+}
+
+// --- 🛡️ 무결성 검증 (agent/, JS) ---
+function runIntegrity(service, rowEl) {
+  const attack = attackToggle.checked;
+  const { screenImg, screenPlaceholder, screenBadge, stepsEl, waitingEl } = beginRun(rowEl, 'integrity');
+
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device: 'mobile' });
+  const es = new EventSource('/api/run-stream?' + qs.toString());
+
+  es.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === 'frame') {
+      screenPlaceholder.style.display = 'none';
+      screenImg.src = 'data:image/jpeg;base64,' + msg.data;
+      screenImg.classList.add('on');
+    } else if (msg.type === 'log') {
+      appendIntegrityStep(stepsEl, msg.step, msg.detail);
+      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 확인하는 중...';
+      document.getElementById('logPanel').appendChild(waitingEl);
+    } else if (msg.type === 'verdict') {
+      waitingEl.remove();
+      document.getElementById('logPanel').appendChild(verdictNode(msg.verdict));
+    } else if (msg.type === 'error') {
+      waitingEl.remove();
+      const errEl = document.createElement('div');
+      errEl.className = 'placeholder';
+      errEl.textContent = '오류: ' + msg.message;
+      document.getElementById('logPanel').appendChild(errEl);
+    } else if (msg.type === 'done') {
+      screenBadge.classList.remove('on');
+      es.close();
+      endRun(rowEl);
+      loadSubscriptions();
+      loadHistory();
+    }
+  };
+  es.onerror = () => {
+    waitingEl.remove();
+    screenBadge.classList.remove('on');
+    es.close();
+    endRun(rowEl);
+  };
+}
+
+function appendIntegrityStep(container, stepText, detail) {
+  const step = document.createElement('div');
+  step.className = 'step';
+  const isBad = /🛑/.test(stepText);
+  const isGood = /✅/.test(stepText);
+  const iconClass = isBad ? 'bad' : isGood ? 'ok' : '';
+  const iconGlyph = isBad ? '✕' : isGood ? '✓' : '';
+  step.innerHTML = `
+    <div class="step-icon ${iconClass}">${iconGlyph}</div>
+    <div class="step-body">
+      <div class="step-label">${escapeHtml(stepText.replace(/^\d+\.\s*/, '').replace(/[🛑✅]\s*/, ''))}</div>
+      ${detail ? `<div class="step-detail">${escapeHtml(detail)}</div>` : ''}
+    </div>`;
+  container.appendChild(step);
+}
+
+function renderIntegrityLog(logs, verdict) {
+  const logPanel = document.getElementById('logPanel');
+  logPanel.innerHTML = '';
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'steps';
+  logPanel.appendChild(stepsEl);
+  for (const entry of logs) appendIntegrityStep(stepsEl, entry.step, entry.detail);
+  logPanel.appendChild(verdictNode(verdict));
+}
+
+function verdictNode(v) {
+  const verdictEl = document.createElement('div');
+  const patternType = DARK_PATTERN_TYPES[v.service];
+  const patternTag = patternType ? `<div style="margin-top:6px"><span class="pattern-tag">${escapeHtml(patternType)}</span></div>` : '';
+  if (v.blocked) {
+    verdictEl.className = 'verdict verdict-blocked';
+    verdictEl.innerHTML = `<div class="verdict-title">🦛 해지하마, 수상해서 스톱!</div>${escapeHtml(v.reason)}${patternTag}`;
+  } else if (v.integrityViolation) {
+    verdictEl.className = 'verdict verdict-violation';
+    verdictEl.innerHTML = `<div class="verdict-title">🦛 해지하마가 속임수 잡아냄!</div>${escapeHtml(v.reason)}${patternTag}`;
+  } else {
+    verdictEl.className = 'verdict verdict-ok';
+    verdictEl.innerHTML = `<div class="verdict-title">검증하마! 해지 완료!</div>무결성 검증 통과 · ${v.durationMs}ms`;
+  }
+  return verdictEl;
+}
+
+// --- 🔍 다크패턴 우회 (agent/detector, Python team_agent) ---
+function runDetector(service, rowEl) {
+  const attack = attackToggle.checked;
+  const { screenImg, screenPlaceholder, screenBadge, stepsEl, waitingEl } = beginRun(rowEl, 'detector');
+
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
+  const es = new EventSource('/api/detector-stream?' + qs.toString());
+
+  es.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === 'frame') {
+      screenPlaceholder.style.display = 'none';
+      screenImg.src = 'data:image/jpeg;base64,' + msg.data;
+      screenImg.classList.add('on');
+    } else if (msg.type === 'detector-step') {
+      appendDetectorStep(stepsEl, msg.step);
+      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 다음 화면 판단 중...';
+      document.getElementById('logPanel').appendChild(waitingEl);
+    } else if (msg.type === 'detector-result') {
+      waitingEl.remove();
+      document.getElementById('logPanel').appendChild(detectorVerdictNode(msg.result));
+    } else if (msg.type === 'error') {
+      waitingEl.remove();
+      const errEl = document.createElement('div');
+      errEl.className = 'placeholder';
+      errEl.textContent = '오류: ' + msg.message;
+      document.getElementById('logPanel').appendChild(errEl);
+    } else if (msg.type === 'done') {
+      screenBadge.classList.remove('on');
+      es.close();
+      endRun(rowEl);
+      loadHistory();
+    }
+  };
+  es.onerror = () => {
+    waitingEl.remove();
+    screenBadge.classList.remove('on');
+    es.close();
+    endRun(rowEl);
+  };
+}
+
+function appendDetectorStep(container, step) {
+  const div = document.createElement('div');
+  div.className = 'step';
+  const detections = step.detections || [];
+  const tags = detections
+    .map((d) => `<span class="pattern-tag" style="background:var(--detector-weak);color:var(--detector)">${escapeHtml(d.pattern)}</span>`)
+    .join('');
+  div.innerHTML = `
+    <div class="step-icon det">${step.step}</div>
+    <div class="step-body">
+      <div class="step-label">${escapeHtml(step.action || '')}</div>
+      ${step.reasoning ? `<div class="step-detail">${escapeHtml(step.reasoning)}</div>` : ''}
+      ${tags ? `<div class="step-tags">${tags}</div>` : ''}
+    </div>`;
+  container.appendChild(div);
+}
+
+function renderDetectorLog(logs, result) {
+  const logPanel = document.getElementById('logPanel');
+  logPanel.innerHTML = '';
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'steps';
+  logPanel.appendChild(stepsEl);
+  for (const step of logs) appendDetectorStep(stepsEl, step);
+  logPanel.appendChild(detectorVerdictNode(result));
+}
+
+function detectorVerdictNode(result) {
+  const el = document.createElement('div');
+  el.className = 'verdict verdict-detector';
+  const count = (result.detections || []).length;
+  if (result.success) {
+    el.innerHTML = `<div class="verdict-title">🔍 다크패턴 ${count}건 판단하며 해지 완료!</div>${result.stepCount}단계 만에 실제 상태(status: ${escapeHtml(result.finalStatus && result.finalStatus.status || '-')})까지 재확인함.`;
+  } else {
+    el.innerHTML = `<div class="verdict-title">🔍 붙잡힘 — 클릭 가능한 후보 없음</div>화면에서 판단한 다크패턴 ${count}건은 기록됐지만, 이 단계는 우회하지 못했음.`;
+  }
+  return el;
 }
 
 function escapeHtml(str) {
@@ -287,6 +774,7 @@ function escapeHtml(str) {
 }
 
 loadSubscriptions();
+loadHistory();
 </script>
 </body>
 </html>
