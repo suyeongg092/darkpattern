@@ -1,4 +1,5 @@
 
+
 <!doctype html>
 <html lang="ko">
 <head>
@@ -233,12 +234,6 @@
   }
   .btn-primary:disabled { opacity: .35; cursor: default; }
   .btn-primary:hover:not(:disabled) { background: #26c4b0; }
-  .btn-detector {
-    font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 7px;
-    border: 1px solid var(--detector); background: var(--detector); color: #fff; cursor: pointer;
-  }
-  .btn-detector:disabled { opacity: .35; cursor: default; }
-  .btn-detector:hover:not(:disabled) { background: #5c37c9; }
   .site-link {
     display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
     padding: 8px 14px; border-radius: 7px; border: 1px solid var(--border);
@@ -469,7 +464,7 @@ async function loadHistoryDetail(id) {
   screenBadge.innerHTML = `지난 기록 · ${timeAgo(data.at)}`;
   if (data.kind === 'detector') {
     setPipelineLabel('detector');
-    renderDetectorLog(data.logs, data.result);
+    renderDetectorLog(data.logs, data.result, data.integrityCheck);
   } else {
     setPipelineLabel('integrity');
     renderIntegrityLog(data.logs, data.verdict);
@@ -511,10 +506,10 @@ function maybeShowSuggestModal(subscriptions) {
   document.getElementById('modalTitle').textContent =
     `${target.suggestionText} 해지하마가 대신 해지해드릴까요?`;
 
-  const rowEl = document.querySelector(`button[data-service="${target.path}"][data-kind="integrity"]`)?.closest('.row');
+  const rowEl = document.querySelector(`button[data-service="${target.path}"][data-kind="combined"]`)?.closest('.row');
   document.getElementById('modalYesBtn').onclick = () => {
     modal.classList.add('hidden');
-    if (rowEl) runIntegrity(target.path, rowEl);
+    if (rowEl) runCombined(target.path, rowEl);
   };
   document.getElementById('modalNoBtn').onclick = () => {
     modal.classList.add('hidden');
@@ -547,13 +542,11 @@ function renderRow(s) {
     ${s.suggestionText ? `<div class="insight">${s.suggestionText}</div>` : ''}
     ${s.note ? `<div class="note-line">최근 처리 기록 · ${s.note}</div>` : ''}
     <div class="actions">
-      <button class="btn-primary" data-service="${s.path}" data-kind="integrity" ${!isActive ? 'disabled' : ''}>🛡️ 무결성 검증</button>
-      <button class="btn-detector" data-service="${s.path}" data-kind="detector" ${!isActive ? 'disabled' : ''}>🔍 다크패턴 우회</button>
+      <button class="btn-primary" data-service="${s.path}" data-kind="combined" ${!isActive ? 'disabled' : ''}>🦛 해지하기</button>
       <a class="site-link" href="${href}">사이트에서 확인하기 &rsaquo;</a>
     </div>
   `;
-  div.querySelector('button[data-kind="integrity"]').addEventListener('click', () => runIntegrity(s.path, div));
-  div.querySelector('button[data-kind="detector"]').addEventListener('click', () => runDetector(s.path, div));
+  div.querySelector('button[data-kind="combined"]').addEventListener('click', () => runCombined(s.path, div));
   return div;
 }
 
@@ -572,43 +565,41 @@ function setPipelineLabel(kind) {
   }
 }
 
-function beginRun(rowEl, kind) {
+function endRun(rowEl) {
+  rowEl.querySelectorAll('button').forEach((b) => (b.disabled = false));
+}
+
+// 버튼 하나(해지하기)로 판단→실행→검증을 한 흐름으로 실행한다: agent/detector(Python)가
+// 다크패턴을 판단하며 실제로 클릭해 해지를 끝내고, 그 직후 같은 요청 안에서 서버가
+// agent/의 검증 로직(policyEngine.js)으로 백엔드 실제 상태를 재조회해 대조한다.
+// 브라우저를 다시 열어 재실행하지 않으므로 "이미 처리된 화면에서 멈추는" 문제가 없다.
+function runCombined(service, rowEl) {
+  const attack = attackToggle.checked;
+  rowEl.querySelectorAll('button').forEach((b) => (b.disabled = true));
+
   const screenImg = document.getElementById('screenImg');
   const screenPlaceholder = document.getElementById('screenPlaceholder');
   const screenBadge = document.getElementById('screenBadge');
-  rowEl.querySelectorAll('button').forEach((b) => (b.disabled = true));
+  const logPanel = document.getElementById('logPanel');
 
   screenImg.classList.remove('on');
   screenPlaceholder.style.display = 'block';
   screenPlaceholder.textContent = '연결 중...';
-  screenBadge.className = 'screen-badge on' + (kind === 'detector' ? ' detector' : '');
+  screenBadge.className = 'screen-badge on detector';
   screenBadge.innerHTML = '<span class="live-dot"></span>실시간';
-  setPipelineLabel(kind);
-
-  const logPanel = document.getElementById('logPanel');
+  setPipelineLabel('detector');
   logPanel.innerHTML = '';
   const stepsEl = document.createElement('div');
   stepsEl.className = 'steps';
   logPanel.appendChild(stepsEl);
   const waitingEl = document.createElement('div');
   waitingEl.className = 'step-waiting';
-  waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 출동 중...';
+  waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 다크패턴을 판단하는 중...';
   logPanel.appendChild(waitingEl);
 
-  return { screenImg, screenPlaceholder, screenBadge, stepsEl, waitingEl };
-}
-
-function endRun(rowEl) {
-  rowEl.querySelectorAll('button').forEach((b) => (b.disabled = false));
-}
-
-// --- 🛡️ 무결성 검증 (agent/, JS) ---
-function runIntegrity(service, rowEl) {
-  const attack = attackToggle.checked;
-  const { screenImg, screenPlaceholder, screenBadge, stepsEl, waitingEl } = beginRun(rowEl, 'integrity');
-
-  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device: 'mobile' });
-  const es = new EventSource('/api/run-stream?' + qs.toString());
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
+  const es = new EventSource('/api/detector-stream?' + qs.toString());
+  let sawStep = false;
 
   es.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
@@ -616,19 +607,24 @@ function runIntegrity(service, rowEl) {
       screenPlaceholder.style.display = 'none';
       screenImg.src = 'data:image/jpeg;base64,' + msg.data;
       screenImg.classList.add('on');
-    } else if (msg.type === 'log') {
-      appendIntegrityStep(stepsEl, msg.step, msg.detail);
-      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 확인하는 중...';
-      document.getElementById('logPanel').appendChild(waitingEl);
-    } else if (msg.type === 'verdict') {
+    } else if (msg.type === 'detector-step') {
+      sawStep = true;
+      appendDetectorStep(stepsEl, msg.step);
+      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 다음 화면 판단 중...';
+      logPanel.appendChild(waitingEl);
+    } else if (msg.type === 'detector-result') {
       waitingEl.remove();
-      document.getElementById('logPanel').appendChild(verdictNode(msg.verdict));
+      logPanel.appendChild(detectorVerdictNode(msg.result));
+    } else if (msg.type === 'integrity-check') {
+      logPanel.appendChild(integrityCheckNode(msg.check));
     } else if (msg.type === 'error') {
       waitingEl.remove();
-      const errEl = document.createElement('div');
-      errEl.className = 'placeholder';
-      errEl.textContent = '오류: ' + msg.message;
-      document.getElementById('logPanel').appendChild(errEl);
+      const note = document.createElement('div');
+      note.className = 'placeholder';
+      note.textContent = sawStep
+        ? '실행 중 문제가 발생했습니다.'
+        : '이 환경에서는 다크패턴 판단 단계를 지원하지 않습니다.';
+      logPanel.appendChild(note);
     } else if (msg.type === 'done') {
       screenBadge.classList.remove('on');
       es.close();
@@ -643,6 +639,18 @@ function runIntegrity(service, rowEl) {
     es.close();
     endRun(rowEl);
   };
+}
+
+function integrityCheckNode(check) {
+  const el = document.createElement('div');
+  if (check.ok) {
+    el.className = 'verdict verdict-ok';
+    el.innerHTML = `<div class="verdict-title">🦛 무결성 재확인 통과!</div>백엔드 실제 상태를 다시 조회해 대조함. 화면 문구가 아니라 실제 처리 결과 기준.`;
+  } else {
+    el.className = 'verdict verdict-violation';
+    el.innerHTML = `<div class="verdict-title">🦛 해지하마가 속임수 잡아냄!</div>${escapeHtml(check.reason)}`;
+  }
+  return el;
 }
 
 function appendIntegrityStep(container, stepText, detail) {
@@ -688,48 +696,6 @@ function verdictNode(v) {
   return verdictEl;
 }
 
-// --- 🔍 다크패턴 우회 (agent/detector, Python team_agent) ---
-function runDetector(service, rowEl) {
-  const attack = attackToggle.checked;
-  const { screenImg, screenPlaceholder, screenBadge, stepsEl, waitingEl } = beginRun(rowEl, 'detector');
-
-  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
-  const es = new EventSource('/api/detector-stream?' + qs.toString());
-
-  es.onmessage = (evt) => {
-    const msg = JSON.parse(evt.data);
-    if (msg.type === 'frame') {
-      screenPlaceholder.style.display = 'none';
-      screenImg.src = 'data:image/jpeg;base64,' + msg.data;
-      screenImg.classList.add('on');
-    } else if (msg.type === 'detector-step') {
-      appendDetectorStep(stepsEl, msg.step);
-      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 다음 화면 판단 중...';
-      document.getElementById('logPanel').appendChild(waitingEl);
-    } else if (msg.type === 'detector-result') {
-      waitingEl.remove();
-      document.getElementById('logPanel').appendChild(detectorVerdictNode(msg.result));
-    } else if (msg.type === 'error') {
-      waitingEl.remove();
-      const errEl = document.createElement('div');
-      errEl.className = 'placeholder';
-      errEl.textContent = '오류: ' + msg.message;
-      document.getElementById('logPanel').appendChild(errEl);
-    } else if (msg.type === 'done') {
-      screenBadge.classList.remove('on');
-      es.close();
-      endRun(rowEl);
-      loadHistory();
-    }
-  };
-  es.onerror = () => {
-    waitingEl.remove();
-    screenBadge.classList.remove('on');
-    es.close();
-    endRun(rowEl);
-  };
-}
-
 function appendDetectorStep(container, step) {
   const div = document.createElement('div');
   div.className = 'step';
@@ -747,7 +713,7 @@ function appendDetectorStep(container, step) {
   container.appendChild(div);
 }
 
-function renderDetectorLog(logs, result) {
+function renderDetectorLog(logs, result, integrityCheck) {
   const logPanel = document.getElementById('logPanel');
   logPanel.innerHTML = '';
   const stepsEl = document.createElement('div');
@@ -755,6 +721,7 @@ function renderDetectorLog(logs, result) {
   logPanel.appendChild(stepsEl);
   for (const step of logs) appendDetectorStep(stepsEl, step);
   logPanel.appendChild(detectorVerdictNode(result));
+  if (integrityCheck) logPanel.appendChild(integrityCheckNode(integrityCheck));
 }
 
 function detectorVerdictNode(result) {
