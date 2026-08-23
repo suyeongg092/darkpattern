@@ -623,16 +623,31 @@ function runCombined(service, rowEl) {
 
   const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device });
   const es = new EventSource('/api/detector-stream?' + qs.toString());
-  let sawStep = false;
+  let sawProgress = false; // frame이든 step이든 하나라도 왔으면 detector가 실제로 동작한 것
+  let handedOff = false; // 무결성 검증으로 넘어간 뒤에는 이 es의 나머지 메시지를 무시한다
+
+  const fallbackToIntegrity = () => {
+    handedOff = true;
+    es.close();
+    screenPlaceholder.style.display = 'block';
+    screenPlaceholder.textContent = '연결 중...';
+    const note = document.createElement('div');
+    note.className = 'placeholder';
+    note.textContent = '이 환경에서는 다크패턴 판단 단계를 지원하지 않아 무결성 검증으로 바로 진행합니다.';
+    logPanel.appendChild(note);
+    runIntegrityFallback(service, attack, rowEl, screenImg, screenPlaceholder, screenBadge, logPanel);
+  };
 
   es.onmessage = (evt) => {
+    if (handedOff) return;
     const msg = JSON.parse(evt.data);
     if (msg.type === 'frame') {
+      sawProgress = true;
       screenPlaceholder.style.display = 'none';
       screenImg.src = 'data:image/jpeg;base64,' + msg.data;
       screenImg.classList.add('on');
     } else if (msg.type === 'detector-step') {
-      sawStep = true;
+      sawProgress = true;
       appendDetectorStep(stepsEl, msg.step);
       waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 다음 화면 판단 중...';
       logPanel.appendChild(waitingEl);
@@ -643,11 +658,13 @@ function runCombined(service, rowEl) {
       logPanel.appendChild(integrityCheckNode(msg.check));
     } else if (msg.type === 'error') {
       waitingEl.remove();
+      if (!sawProgress) {
+        fallbackToIntegrity();
+        return;
+      }
       const note = document.createElement('div');
       note.className = 'placeholder';
-      note.textContent = sawStep
-        ? '실행 중 문제가 발생했습니다.'
-        : '이 환경에서는 다크패턴 판단 단계를 지원하지 않습니다.';
+      note.textContent = '실행 중 문제가 발생했습니다.';
       logPanel.appendChild(note);
     } else if (msg.type === 'done') {
       screenBadge.classList.remove('on');
@@ -658,7 +675,64 @@ function runCombined(service, rowEl) {
     }
   };
   es.onerror = () => {
+    if (handedOff) return;
     waitingEl.remove();
+    if (!sawProgress) {
+      fallbackToIntegrity();
+      return;
+    }
+    screenBadge.classList.remove('on');
+    es.close();
+    endRun(rowEl);
+  };
+}
+
+// detector가 이 환경에서 아예 실행되지 못했을 때(예: Python 미설치 배포본)의
+// 대체 경로 — agent/(JS)만으로 실행+검증을 끝까지 완료한다.
+function runIntegrityFallback(service, attack, rowEl, screenImg, screenPlaceholder, screenBadge, logPanel) {
+  setPipelineLabel('integrity');
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'steps';
+  logPanel.appendChild(stepsEl);
+  const waitingEl = document.createElement('div');
+  waitingEl.className = 'step-waiting';
+  waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 출동 중...';
+  logPanel.appendChild(waitingEl);
+
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device });
+  const es = new EventSource('/api/run-stream?' + qs.toString());
+
+  es.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === 'frame') {
+      screenPlaceholder.style.display = 'none';
+      screenImg.src = 'data:image/jpeg;base64,' + msg.data;
+      screenImg.classList.add('on');
+    } else if (msg.type === 'log') {
+      appendIntegrityStep(stepsEl, msg.step, msg.detail);
+      waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 해지하마가 확인하는 중...';
+      logPanel.appendChild(waitingEl);
+    } else if (msg.type === 'verdict') {
+      waitingEl.remove();
+      logPanel.appendChild(verdictNode(msg.verdict));
+    } else if (msg.type === 'error') {
+      waitingEl.remove();
+      const errEl = document.createElement('div');
+      errEl.className = 'placeholder';
+      errEl.textContent = '오류: ' + msg.message;
+      logPanel.appendChild(errEl);
+    } else if (msg.type === 'done') {
+      screenBadge.classList.remove('on');
+      es.close();
+      endRun(rowEl);
+      loadSubscriptions();
+      loadHistory();
+    }
+  };
+  es.onerror = () => {
+    waitingEl.remove();
+    screenPlaceholder.style.display = 'block';
+    screenPlaceholder.textContent = '연결이 끊어졌습니다. 다시 시도해주세요.';
     screenBadge.classList.remove('on');
     es.close();
     endRun(rowEl);
