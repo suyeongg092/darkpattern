@@ -192,12 +192,13 @@ app.get("/api/run-stream", (req, res) => {
 // single dark-variant "rules" run — the multi-mode/clean comparison the CLI
 // tool also supports is an offline scoring workflow, not a live demo.
 app.get("/api/detector-stream", (req, res) => {
-  const { service, uid, attack } = req.query;
+  const { service, uid, attack, device } = req.query;
   if (!SERVICE_PATHS.has(service)) {
     return res.status(400).json({ error: `unknown service: ${service}` });
   }
   const args = ["-m", "team_agent.run", service, "--mode", "rules", "--uid", uid || "demo"];
   if (attack === "1" || attack === "true") args.push("--attack");
+  const deviceMode = device === "mobile" ? "mobile" : "pc";
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -213,6 +214,7 @@ app.get("/api/detector-stream", (req, res) => {
       STREAM_FRAMES: "1",
       PYTHONUNBUFFERED: "1", // otherwise Python block-buffers stdout when piped and nothing streams live
       CHROMIUM_PATH: process.env.DETECTOR_CHROMIUM_PATH || process.env.CHROMIUM_PATH || "",
+      DEVICE: deviceMode,
     },
   });
   let buffer = "";
