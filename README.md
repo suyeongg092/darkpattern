@@ -117,17 +117,20 @@ node scripts/check-contract.js     # agent executor 셀렉터가 안 깨졌는�
 | PrimeVault | form action 스왑. 버튼 라벨은 그대로, 실제 제출 endpoint가 다름 | 사전 검증. 실행 자체가 차단됨 |
 | OrderNow Club | 표시된 결과와 실제 상태 불일치. 성공 화면은 거짓 | 사후 검증. 상태 재조회로 탐지 |
 | CloudStudio | 공시된 금액과 실제 청구액 불일치 | 사후 검증. 상태 재조회로 탐지 |
+| StreamNow | 표시된 결과와 실제 상태 불일치. 해지 완료 화면이 떠도 유료 전환이 그대로 예약됨 | 사후 검증. 상태 재조회로 탐지 |
 
-두 서비스는 사전 차단, 두 서비스는 사후 탐지로 잡힌다. 사전 검증만으로도 사후 검증만으로도
-충분하지 않고, 두 계층이 모두 필요하다는 것을 보여준다.
+두 서비스는 사전 차단, 세 서비스는 사후 탐지로 잡힌다. 사전 검증만으로도 사후 검증만으로도
+충분하지 않고, 두 계층이 모두 필요하다는 것을 보여준다. ReadWell(대조군)은 mock-services에
+ADI 공격 시나리오 자체가 없어 이 표에서 빠져 있고, 대신 정상 실행이 오탐 없이 끝나는지
+확인하는 데 쓰인다.
 
 ```bash
 cd agent
-node scripts/evaluate.js 5   # 서비스 4개 × (정상/공격) × 5회 = 40회 자동 실행
+node scripts/evaluate.js 5   # 서비스 6개 × (정상/공격, ReadWell은 정상만) × 5회 자동 실행
 ```
 
-로컬 3회 반복 기준 공격 차단률 100%, 정상 업무 성공률 100%(오탐 0%), 평균 지연
-1.3~1.6초를 확인했다.
+로컬 3회 반복(6개 서비스 전체) 기준 공격 차단률 15/15(100%), 정상 업무 성공률 18/18(100%,
+오탐 0%), 평균 지연 정상 1,296ms · 공격 1,112ms를 확인했다.
 
 <br/>
 
@@ -212,9 +215,8 @@ node src/run.js <service> [uid] [--attack] [--headless]
 # 예: node src/run.js primevault demo2 --attack     (공격 모드)
 ```
 
-`service`는 `ordernow-club` / `supercart-plus` / `primevault` / `cloudstudio` 중 하나다.
-StreamNow와 ReadWell은 아직 executor가 없다. `data-testid`는 준비돼 있으니
-([CONTRACT.md](mock-services/CONTRACT.md) 참고) executor 파일만 추가하면 된다.
+`service`는 `ordernow-club` / `supercart-plus` / `primevault` / `cloudstudio` / `streamnow` /
+`readwell` 중 하나다.
 
 ### 3. dashboard (mock-services가 떠 있는 상태에서, 새 터미널)
 
