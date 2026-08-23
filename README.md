@@ -63,11 +63,12 @@ darkpattern/
 ```
 
 인터페이스 계약(경로, `data-testid`, API 스키마)은
--[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다.
-+[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다. `agent/`가 정해진
-+서비스별 정책으로 위조를 검증하는 것과 달리, [`agent/detector`](agent/detector/README.md)는
-+서비스에 종속되지 않은 코드로 다크패턴 자체를 판단하고 우회한다 — 실행 방법과 세 모드
-+(`naive`/`rules`/`llm_rag`) 비교 결과는 해당 폴더의 README를 참고.
+[`mock-services/CONTRACT.md`](mock-services/CONTRACT.md)에 정리돼 있다.
+
+- **`agent/`**: 정해진 서비스별 정책으로 위조(ADI)를 검증한다.
+- **[`agent/detector`](agent/detector/README.md)**: 서비스에 종속되지 않은 코드로
+  다크패턴 자체를 판단하고 우회한다. 실행 방법과 세 모드(`naive`/`rules`/`llm_rag`)
+  비교 결과는 해당 폴더의 README를 참고.
 
 <br/>
 
