@@ -155,7 +155,7 @@ ReadWell의 구독 상태는 셋이다. `active` → `scheduled`(정기결제 �
 해지 버튼은 유령 어포던스이고, 탐지기 입장에서는 강제 오탐이 된다.
 
 기존 4개 사이트에도 `data-testid`가 모두 들어가 있다. 다만 executor는 아직 텍스트 셀렉터를
-쓰고 있고 그 문구는 계속 유지되므로, 옮기는 시점은 팀원1이 정하면 된다.
+쓰고 있고 그 문구는 계속 유지되므로, 옮기는 시점은 Agent 담당이 정하면 된다.
 `node scripts/check-contract.js`가 문구·필드·첫 `<form>` action이 안 깨졌는지 자동 확인한다
 (같은 문구가 둘 이상 생기는 Playwright strict mode 위반도 잡는다).
 
