@@ -1,5 +1,6 @@
 
 
+
 <!doctype html>
 <html lang="ko">
 <head>
@@ -94,6 +95,16 @@
   }
   .ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
   .ghost-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+
+  .device-toggle {
+    display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  }
+  .device-btn {
+    font-size: 12px; color: var(--ink-2); background: var(--surface); border: none;
+    padding: 5px 12px; cursor: pointer;
+  }
+  .device-btn:first-child { border-right: 1px solid var(--border); }
+  .device-btn.active { background: var(--accent); color: #06201d; font-weight: 700; }
 
   .screen-layout { display: grid; grid-template-columns: 1fr 1.05fr; gap: 20px; align-items: start; }
   @media (max-width: 860px) { .screen-layout { grid-template-columns: 1fr; } }
@@ -307,6 +318,10 @@
         <div class="screen-sub" id="screenModeLabel">Agent가 실제로 보고 있는 화면을 그대로 보여줍니다</div>
       </div>
       <div class="screen-controls">
+        <div class="device-toggle" id="deviceToggle">
+          <button class="device-btn active" data-device="pc" type="button">PC</button>
+          <button class="device-btn" data-device="mobile" type="button">모바일</button>
+        </div>
         <button class="ghost-btn" id="historyBtn">지난 기록 (<span id="historyCount">0</span>)</button>
       </div>
     </div>
@@ -315,7 +330,7 @@
         <div class="screen" id="screen">
           <div class="screen-badge" id="screenBadge"><span class="live-dot"></span>실시간</div>
           <img id="screenImg" alt="agent live view">
-          <div class="screen-placeholder" id="screenPlaceholder">아래 목록에서 "🛡️ 무결성 검증" 또는<br>"🔍 다크패턴 우회"를 누르면<br>여기에 실제 다크패턴 사이트 화면이 실시간으로 나타납니다</div>
+          <div class="screen-placeholder" id="screenPlaceholder">아래 목록에서 "🦛 해지하기"를 누르면<br>여기에 실제 다크패턴 사이트 화면이 실시간으로 나타납니다</div>
         </div>
         <div class="history-panel hidden" id="historyPanel">
           <div class="history-empty">아직 실행 기록이 없어요.</div>
@@ -386,6 +401,15 @@ const attackToggle = document.getElementById('attackToggle');
 const attackToggleLabel = document.getElementById('attackToggleLabel');
 attackToggle.addEventListener('change', () => {
   attackToggleLabel.classList.toggle('on', attackToggle.checked);
+});
+
+// --- device toggle: PC/모바일 뷰포트로 실행 (applies to whichever run button is clicked next) ---
+let device = 'pc';
+document.getElementById('deviceToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('.device-btn');
+  if (!btn) return;
+  device = btn.dataset.device;
+  document.querySelectorAll('.device-btn').forEach((b) => b.classList.toggle('active', b === btn));
 });
 
 function siteHref(servicePath) {
@@ -597,7 +621,7 @@ function runCombined(service, rowEl) {
   waitingEl.innerHTML = '<span class="ring"></span><span class="hippo-roam">🦛</span> 다크패턴을 판단하는 중...';
   logPanel.appendChild(waitingEl);
 
-  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0' });
+  const qs = new URLSearchParams({ service, uid, attack: attack ? '1' : '0', device });
   const es = new EventSource('/api/detector-stream?' + qs.toString());
   let sawStep = false;
 
