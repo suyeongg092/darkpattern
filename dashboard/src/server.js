@@ -12,14 +12,15 @@ const MOCK_BASE = process.env.MOCK_BASE_URL || "http://localhost:4000";
 const AGENT_DIR = path.join(__dirname, "..", "..", "agent");
 const AGENT_ENTRY = path.join(AGENT_DIR, "src", "run.js");
 const DETECTOR_DIR = path.join(AGENT_DIR, "detector");
+// agent/의 검증 로직(순수 비교 함수, 브라우저 불필요)만 재사용한다 — Playwright
+// 재실행 없이, agent/detector가 이미 도달한 실행 후 상태를 그대로 검사한다.
+const { SERVICE_TEMPLATES } = require(path.join(AGENT_DIR, "src", "policy.js"));
+const { checkAfterExecution } = require(path.join(AGENT_DIR, "src", "policyEngine.js"));
 
-// 두 개의 서로 다른 실행기가 있다.
-//   agent/           (JS)     — 정해진 정책으로 ADI(백엔드 위조) 공격을 검증한다.
-//   agent/detector   (Python) — 서비스에 종속되지 않은 코드로 다크패턴을 그때그때
-//                                판단해서 우회한다.
-// 둘 다 CDP 스크린캐스트로 실시간 화면을 보내는 동일한 와이어 프로토콜
-// (FRAME:/LOG-or-RESULT_JSON:)을 stdout에 찍도록 맞춰져 있어서, 아래 두 SSE
-// 엔드포인트는 spawn 대상과 로그 파싱 방식만 다르고 구조는 같다.
+// agent/detector(Python)가 다크패턴을 판단하며 실제로 클릭해 실행까지 마치면,
+// 같은 요청 안에서 곧바로 agent/의 postCheck 정책으로 실행 후 상태를 재검증한다.
+// "판단 → 실행 → 검증"을 한 번의 실행으로 잇기 위함 — agent/의 Playwright 실행기를
+// 별도로 다시 돌리면 이미 처리된 화면이라 클릭 대상을 못 찾고 멈춘다.
 const SERVICES = [
   { path: "streamnow", name: "StreamNow", price: 13900, usageThisMonth: 3, accent: "#7b3fe4", daysUntilBilling: 6 },
   { path: "ordernow-club", name: "OrderNow Club", price: 4900, usageThisMonth: 2, accent: "#12b886", daysUntilBilling: 2 },
@@ -218,6 +219,7 @@ app.get("/api/detector-stream", (req, res) => {
   let lastFrame = null;
   const collectedLogs = [];
   let finalResult = null;
+  let integrityCheck = null;
   let stderrTail = "";
 
   child.stderr.on("data", (chunk) => {
@@ -249,6 +251,12 @@ app.get("/api/detector-stream", (req, res) => {
         try {
           finalResult = JSON.parse(line.slice("RESULT:".length));
           send({ type: "detector-result", result: finalResult });
+          const template = SERVICE_TEMPLATES[service];
+          integrityCheck =
+            template && template.postCheck && finalResult.finalStatus
+              ? checkAfterExecution({ postCheck: template.postCheck }, finalResult.finalStatus)
+              : { ok: true };
+          send({ type: "integrity-check", check: integrityCheck });
         } catch {
           // ignore
         }
@@ -270,6 +278,7 @@ app.get("/api/detector-stream", (req, res) => {
         serviceName: serviceMeta ? serviceMeta.name : service,
         attack: attack === "1" || attack === "true",
         result: finalResult,
+        integrityCheck,
         logs: collectedLogs,
         lastFrame,
       });
