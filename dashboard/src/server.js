@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 
 const app = express();
 app.use(express.json());
@@ -16,6 +16,26 @@ const DETECTOR_DIR = path.join(AGENT_DIR, "detector");
 // 재실행 없이, agent/detector가 이미 도달한 실행 후 상태를 그대로 검사한다.
 const { SERVICE_TEMPLATES } = require(path.join(AGENT_DIR, "src", "policy.js"));
 const { checkAfterExecution } = require(path.join(AGENT_DIR, "src", "policyEngine.js"));
+
+// detector 는 Python 이다. 실행 명령 이름이 OS 마다 다르다 — macOS/Linux 는 python3,
+// Windows 는 python(또는 py)이고, Windows 에는 아무 일도 하지 않는 python3 스토어
+// 별칭이 PATH 를 가로채고 있어서 이름만 보고 고르면 조용히 실패한다.
+// 그래서 후보를 실제로 한 번 실행해 보고 파이썬 3 이 응답하는 것을 고른다.
+const PYTHON_BIN = (() => {
+  if (process.env.PYTHON_BIN) return process.env.PYTHON_BIN;
+  for (const cmd of ["python3", "python", "py"]) {
+    try {
+      const r = spawnSync(cmd, ["-c", "import sys;print(sys.version_info[0])"], {
+        encoding: "utf8",
+        timeout: 5000,
+      });
+      if (r.status === 0 && String(r.stdout).trim() === "3") return cmd;
+    } catch {
+      // 다음 후보로
+    }
+  }
+  return "python3"; // 못 찾으면 원래 이름으로 두고, 실패 메시지를 그대로 보여준다
+})();
 
 // agent/detector(Python)가 다크패턴을 판단하며 실제로 클릭해 실행까지 마치면,
 // 같은 요청 안에서 곧바로 agent/의 postCheck 정책으로 실행 후 상태를 재검증한다.
@@ -207,12 +227,15 @@ app.get("/api/detector-stream", (req, res) => {
   });
   const send = (payload) => res.write(`data: ${JSON.stringify(payload)}\n\n`);
 
-  const child = spawn("python3", args, {
+  const child = spawn(PYTHON_BIN, args, {
     cwd: DETECTOR_DIR,
     env: {
       ...process.env,
       STREAM_FRAMES: "1",
       PYTHONUNBUFFERED: "1", // otherwise Python block-buffers stdout when piped and nothing streams live
+      // detector 는 한글 로그를 stdout 으로 흘려보낸다. Windows 기본 코드페이지(cp949)로는
+      // 인코딩할 수 없는 글자에서 UnicodeEncodeError 로 죽으므로 UTF-8 을 명시한다.
+      PYTHONIOENCODING: "utf-8",
       CHROMIUM_PATH: process.env.DETECTOR_CHROMIUM_PATH || process.env.CHROMIUM_PATH || "",
       DEVICE: deviceMode,
     },

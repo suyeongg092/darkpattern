@@ -210,10 +210,24 @@ dashboard에서 실시간 화면(CDP 스크린캐스트)과 함께 실행할 수
 
 ## 🚀 실행 방법
 
+### 0. 설치 (최초 1회)
+
+```bash
+npm install                                             # Node 의존성
+npm --prefix agent exec playwright install chromium     # agent 가 쓰는 브라우저
+pip install -r agent/detector/requirements.txt          # detector(Python) 의존성
+python -m playwright install chromium                   # detector 가 쓰는 브라우저
+```
+
+`npm install`과 `pip install`은 라이브러리만 설치하고 브라우저 실행 파일은 받지 않으므로,
+2·4번 줄을 건너뛰면 agent 는 "실행 직전 폼 검사" 단계에서, detector 는 시작 직후에 멈춘다.
+Node 와 Python 이 서로 다른 Playwright 버전을 쓰기 때문에 브라우저도 각각 받아야 한다.
+
+Docker/Render 배포는 Playwright 공식 이미지에 Chromium 이 포함돼 있어 이 단계가 필요 없다.
+
 ### 1. mock-services (목업 다크패턴 사이트)
 
 ```bash
-npm install
 npm run mock:start
 # http://localhost:4000      시연용 정문. 파라미터 없는 서비스 목록
 # http://localhost:4000/lab  개발용 평가 패널. 시정 전/후, 공격 모드 스위치보드
