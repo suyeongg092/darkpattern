@@ -30,6 +30,22 @@ const SERVICE_TEMPLATES = {
     preCheck: null,
     postCheck: { requireStatus: "cancelled", feeTolerance: 0 },
   },
+  streamnow: {
+    // Same shape as ordernow-club's attack: the confirm screen reports a
+    // completed cancellation while the paid conversion stays scheduled.
+    // Nothing in the confirm form's DOM is tampered with beforehand.
+    preCheck: null,
+    postCheck: { requireStatus: "cancelled" },
+  },
+  readwell: {
+    // Compliant control service — mock-services defines no attack mode for
+    // it at all, so this preCheck never actually fires a block; it's a
+    // sanity check that the account-view executor is still submitting to the
+    // endpoint the policy expects. "정기결제 해지" leaves the account
+    // "scheduled" (usable through period end), not "cancelled".
+    preCheck: { expectedFormAction: "/readwell/cancel" },
+    postCheck: { requireStatus: "scheduled" },
+  },
 };
 
 function draftPolicy(instruction, service, uid) {
