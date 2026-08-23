@@ -260,7 +260,7 @@ _UNHIGHLIGHT_JS = """() => {
 
 def crawl(page, base_url: str, service: str, uid: str, variant: str, mode: str,
           attack: bool = False, start_path: str = "/manage", demo_pause: float = 0.0,
-          shot_dir=None) -> CrawlResult:
+          shot_dir=None, on_step=None) -> CrawlResult:
     q = {"uid": uid}
     if variant == "clean":
         q["variant"] = "clean"
@@ -351,9 +351,12 @@ def crawl(page, base_url: str, service: str, uid: str, variant: str, mode: str,
                 page.screenshot(path=str(fail_shot))
                 page.evaluate(_UNHIGHLIGHT_JS)
             status = _fetch_status(base_url, service, uid, variant)
-            steps.append(StepLog(step_i, path, "중단 (클릭 가능한 후보 없음)", reasoning,
-                                  detections, candidates_table, status,
-                                  str(fail_shot) if fail_shot else None).__dict__)
+            step_log = StepLog(step_i, path, "중단 (클릭 가능한 후보 없음)", reasoning,
+                                detections, candidates_table, status,
+                                str(fail_shot) if fail_shot else None).__dict__
+            steps.append(step_log)
+            if on_step:
+                on_step(step_log)
             break
 
         selector = _selector_for(chosen)
@@ -377,11 +380,14 @@ def crawl(page, base_url: str, service: str, uid: str, variant: str, mode: str,
         page.wait_for_load_state("networkidle")
 
         status = _fetch_status(base_url, service, uid, variant)
-        steps.append(StepLog(
+        step_log = StepLog(
             step_i, path, f"클릭: {chosen['testid']} (\"{chosen.get('text')}\")  [{used_mode}]",
             reasoning, detections, candidates_table, status,
             str(shot_path) if shot_path else None,
-        ).__dict__)
+        ).__dict__
+        steps.append(step_log)
+        if on_step:
+            on_step(step_log)
 
         # ReadWell처럼 "정기결제 해지(다음 결제일까지 이용 후 종료)"가 별도 최종
         # 상태(scheduled)로 남는 서비스도 있다 — cancelled와 마찬가지로 성공.
