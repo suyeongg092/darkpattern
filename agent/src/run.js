@@ -18,6 +18,8 @@ const EXECUTORS = {
   "supercart-plus": require("./executors/superCartPlus"),
   primevault: require("./executors/primeVault"),
   cloudstudio: require("./executors/cloudStudio"),
+  streamnow: require("./executors/streamNow"),
+  readwell: require("./executors/readWell"),
 };
 
 const logs = [];
