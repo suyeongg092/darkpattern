@@ -38,6 +38,20 @@ START_PATHS = {"ordernow-club": "/manage"}
 NEEDS_SIGNUP_BOOTSTRAP = {"streamnow"}  # uid가 미가입(status: none) 상태로 시작하는 서비스
 
 
+def _viewport() -> dict:
+    # Only the dashboard's live run sets DEVICE — leave the scoring/CLI path
+    # (evaluate/score.js callers) on its original fixed viewport so detection
+    # numbers stay unaffected. Mirrors the sibling JS agent's DEVICE-driven
+    # sizes (agent/src/run.js) so the dashboard's PC/모바일 토글 looks the
+    # same on either executor.
+    device = os.environ.get("DEVICE")
+    if device == "mobile":
+        return {"width": 390, "height": 844}
+    if device == "pc":
+        return {"width": 960, "height": 480}
+    return {"width": 480, "height": 640}
+
+
 def _launch_kwargs(headless: bool, slow_mo: int) -> dict:
     kwargs = {"headless": headless, "slow_mo": slow_mo}
     # Some sandboxed environments preinstall a browser revision that doesn't
@@ -64,9 +78,10 @@ def _start_screencast(page, on_frame):
         except Exception:
             pass  # session may already be closing — never let ack failures kill the crawl
 
+    vp = _viewport()
     cdp.on("Page.screencastFrame", _on_frame)
     cdp.send("Page.startScreencast", {
-        "format": "jpeg", "quality": 80, "maxWidth": 480, "maxHeight": 640, "everyNthFrame": 1,
+        "format": "jpeg", "quality": 80, "maxWidth": vp["width"], "maxHeight": vp["height"], "everyNthFrame": 1,
     })
     return cdp
 
@@ -77,7 +92,7 @@ def run_variant(service: str, mode: str, variant: str, uid: str, attack: bool,
     start_path = START_PATHS.get(service, "/")
     with sync_playwright() as p:
         browser = p.chromium.launch(**_launch_kwargs(headless, slow_mo))
-        page = browser.new_page(viewport={"width": 480, "height": 640})
+        page = browser.new_page(viewport=_viewport())
         if on_frame:
             _start_screencast(page, on_frame)
         bootstrap_detections: list[dict] = []
